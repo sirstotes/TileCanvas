@@ -20,9 +20,13 @@ function ec(x, gridSize) {
 
 
 class Layer {
-    constructor() {
+    constructor(displaySize) {
         this.children = [];
-        this.gridSize = 50;
+        this.gridScale = 1;
+        this.displaySize = displaySize;
+    }
+    getGridSize() {
+        return this.gridScale * this.displaySize;
     }
     size() {
         return this.children.length;
@@ -86,6 +90,9 @@ class TileLike {
         throw new Error("Not implemented");
     }
     move(offsetX, offsetY) {
+        throw new Error("Not implemented");
+    }
+    recolor(color) {
         throw new Error("Not implemented");
     }
     draw() {
@@ -168,6 +175,11 @@ class Group extends TileLike {
             child.move(offsetX, offsetY);
         }
     }
+    recolor(color) {
+        for(let child of this.children) {
+            child.recolor(color);
+        }
+    }
     draw() {
         for(let child of this.children) {
             child.draw();
@@ -218,7 +230,7 @@ class Group extends TileLike {
     drawOutline() {
         let [minX, minY, maxX, maxY] = this.getBounds();
         noFill();
-        rect(sc(minX, this.getLayer().gridSize), sc(minY, this.getLayer().gridSize), ec(maxX, this.getLayer().gridSize), ec(maxY, this.getLayer().gridSize));
+        rect(sc(minX, this.getLayer().getGridSize()), sc(minY, this.getLayer().getGridSize()), ec(maxX, this.getLayer().getGridSize()), ec(maxY, this.getLayer().getGridSize()));
     }
     collidesWith(mouseX, mouseY) {
         for(let child of this.children) {
@@ -274,6 +286,9 @@ class Tile extends TileLike {
         this.endX += offsetX;
         this.endY += offsetY;
     }
+    recolor(color) {
+        this.color = color;
+    }
     sameAs(otherTile) {
         return this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation;
     }
@@ -302,10 +317,10 @@ class Rect extends Tile {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
-        rect(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize));
+        rect(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
-        return mouseX > sc(sX, layer.gridSize) && mouseX < ec(eX, layer.gridSize) && mouseY > sc(sY, layer.gridSize) && mouseY < ec(eY, layer.gridSize);
+        return mouseX > sc(sX, layer.getGridSize()) && mouseX < ec(eX, layer.getGridSize()) && mouseY > sc(sY, layer.getGridSize()) && mouseY < ec(eY, layer.getGridSize());
     }
 }
 
@@ -314,13 +329,13 @@ class Ellipse extends Tile {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
-        ellipse(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize));
+        ellipse(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
-        let centerX = cc(sX + (eX - sX) / 2, layer.gridSize);
-        let centerY = cc(sY + (eY - sY) / 2, layer.gridSize);
-        let radiusX = (sc(sX, layer.gridSize) - ec(eX, layer.gridSize)) / 2;
-        let radiusY = (sc(sY, layer.gridSize) - ec(eY, layer.gridSize)) / 2;
+        let centerX = cc(sX + (eX - sX) / 2, layer.getGridSize());
+        let centerY = cc(sY + (eY - sY) / 2, layer.getGridSize());
+        let radiusX = (sc(sX, layer.getGridSize()) - ec(eX, layer.getGridSize())) / 2;
+        let radiusY = (sc(sY, layer.getGridSize()) - ec(eY, layer.getGridSize())) / 2;
         return inEllipse(centerX, centerY, radiusX, radiusY, mouseX, mouseY);
     }
 }
@@ -334,25 +349,25 @@ class Quadrant extends Tile {
         let h = eY - sY + 1;
         switch(int(r)) {
             case 0:
-                arc(sc(sX - w, layer.gridSize), sc(sY - h, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize), 0, HALF_PI);
+                arc(sc(sX - w, layer.getGridSize()), sc(sY - h, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), 0, HALF_PI);
                 break;
             case 1:
-                arc(sc(sX, layer.gridSize), sc(sY - h, layer.gridSize), ec(eX + w, layer.gridSize), ec(eY, layer.gridSize), HALF_PI, PI);
+                arc(sc(sX, layer.getGridSize()), sc(sY - h, layer.getGridSize()), ec(eX + w, layer.getGridSize()), ec(eY, layer.getGridSize()), HALF_PI, PI);
                 break;
             case 2:
-                arc(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX + w, layer.gridSize), ec(eY + h, layer.gridSize), PI, PI + HALF_PI);
+                arc(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX + w, layer.getGridSize()), ec(eY + h, layer.getGridSize()), PI, PI + HALF_PI);
                 break;
             case 3:
-                arc(sc(sX - w, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY + h, layer.gridSize), PI + HALF_PI, TWO_PI);
+                arc(sc(sX - w, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY + h, layer.getGridSize()), PI + HALF_PI, TWO_PI);
                 break;
         }
     }
     drawOutline() {
-        super.drawOutline(this.getLayer().gridSize);
-        let sX = sc(this.startX, this.getLayer().gridSize);
-        let sY = sc(this.startY, this.getLayer().gridSize);
-        let eX = ec(this.endX, this.getLayer().gridSize);
-        let eY = ec(this.endY, this.getLayer().gridSize);
+        super.drawOutline(this.getLayer().getGridSize());
+        let sX = sc(this.startX, this.getLayer().getGridSize());
+        let sY = sc(this.startY, this.getLayer().getGridSize());
+        let eX = ec(this.endX, this.getLayer().getGridSize());
+        let eY = ec(this.endY, this.getLayer().getGridSize());
         switch(int(this.rotation)) {
             case 0:
                 line(sX, sY, eX, sY);
@@ -418,10 +433,10 @@ class InverseQuadrant extends Tile {
     drawOutline() {
         noFill();
         Quadrant.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
-        let sX = sc(this.startX, this.getLayer().gridSize);
-        let sY = sc(this.startY, this.getLayer().gridSize);
-        let eX = ec(this.endX, this.getLayer().gridSize);
-        let eY = ec(this.endY, this.getLayer().gridSize);
+        let sX = sc(this.startX, this.getLayer().getGridSize());
+        let sY = sc(this.startY, this.getLayer().getGridSize());
+        let eX = ec(this.endX, this.getLayer().getGridSize());
+        let eY = ec(this.endY, this.getLayer().getGridSize());
         switch(int(this.rotation)) {
             case 0:
                 line(eX, sY, eX, eY);
@@ -478,29 +493,29 @@ class Wedge extends Tile {
     static drawRaw(sX, sY, eX, eY, r, layer) {
         switch(int(r)) {
             case 0:
-                triangle(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), sc(sY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize));
+                triangle(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()));
                 break;
             case 1:
-                triangle(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize));
+                triangle(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()));
                 break;
             case 2:
-                triangle(ec(eX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize));
+                triangle(ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()));
                 break;
             case 3:
-                triangle(ec(eX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), sc(sY, layer.gridSize));
+                triangle(ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()));
                 break;
         }
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         switch(int(r)) {
             case 0:
-                return inTriangle(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), sc(sY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize), mouseX, mouseY);
+                return inTriangle(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()), mouseX, mouseY);
             case 1:
-                return inTriangle(sc(sX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize), mouseX, mouseY);
+                return inTriangle(sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), mouseX, mouseY);
             case 2:
-                return inTriangle(ec(eX, layer.gridSize), sc(sY, layer.gridSize), ec(eX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize), mouseX, mouseY);
+                return inTriangle(ec(eX, layer.getGridSize()), sc(sY, layer.getGridSize()), ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()), mouseX, mouseY);
             case 3:
-                return inTriangle(ec(eX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), ec(eY, layer.gridSize), sc(sX, layer.gridSize), sc(sY, layer.gridSize), mouseX, mouseY);
+                return inTriangle(ec(eX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), ec(eY, layer.getGridSize()), sc(sX, layer.getGridSize()), sc(sY, layer.getGridSize()), mouseX, mouseY);
         }
     }
 }

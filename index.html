@@ -1,58 +1,62 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
     <script src="scripts/shapes.js"></script>
     <script src="scripts/sketch.js"></script>
-    <style>
-        .colorbutton {
-            width: 32px;
-            height: 32px;
-            margin-right: 8px;
-        }
-    </style>
   </head>
   <body>
     <main>
+      <div id="canvasContainer"></div>
     </main>
-    <button onclick="setTool('draw')">✏</button>
-    <button onclick="setTool('erase')">🧹</button>
-    <button onclick="setTool('select')">🛒</button>
-    <button onclick="setTool('fill')">🎨</button>
-    <button onclick="setTool('back')">⏮</button>
-    <button onclick="setTool('front')">⏭</button>
-    <span id="selectionContextButtons">
-      <button onclick="groupSelection()">❤️‍🩹</button>
-      <button onclick="ungroupSelection()">💔</button>
-      <button onclick="duplicateSelection()">💕</button>
-      <button onclick="rotateSelection(1)">↩</button>
-      <button onclick="rotateSelection(-1)">↪</button>
-    </span>
-    <button onclick="clearCanvas()">💣</button>
-    <br>
-    <button onclick="setShape('rect');setTool('draw')">⏹</button>
-    <button onclick="setShape('ellipse');setTool('draw')">⏺</button>
-    <button onclick="setShape('quadrant');setTool('draw')">🌖</button>
-    <button onclick="setShape('inverseQuadrant');setTool('draw')">🌘</button>
-    <button onclick="setShape('wedge');setTool('draw')">▶</button>
-    <br>
-    <button class="colorbutton" onclick="setColor('#000000')" style="background-color:#000000;"></button>
-    <button class="colorbutton" onclick="setColor('#1D2B53')" style="background-color:#1D2B53;"></button>
-    <button class="colorbutton" onclick="setColor('#7E2553')" style="background-color:#7E2553;"></button>
-    <button class="colorbutton" onclick="setColor('#008751')" style="background-color:#008751;"></button>
-    <button class="colorbutton" onclick="setColor('#AB5236')" style="background-color:#AB5236;"></button>
-    <button class="colorbutton" onclick="setColor('#5F574F')" style="background-color:#5F574F;"></button>
-    <button class="colorbutton" onclick="setColor('#C2C3C7')" style="background-color:#C2C3C7;"></button>
-    <button class="colorbutton" onclick="setColor('#FFF1E8')" style="background-color:#FFF1E8;"></button>
-    <button class="colorbutton" onclick="setColor('#FF004D')" style="background-color:#FF004D;"></button>
-    <button class="colorbutton" onclick="setColor('#FFA300')" style="background-color:#FFA300;"></button>
-    <button class="colorbutton" onclick="setColor('#FFEC27')" style="background-color:#FFEC27;"></button>
-    <button class="colorbutton" onclick="setColor('#00E436')" style="background-color:#00E436;"></button>
-    <button class="colorbutton" onclick="setColor('#29ADFF')" style="background-color:#29ADFF;"></button>
-    <button class="colorbutton" onclick="setColor('#83769C')" style="background-color:#83769C;"></button>
-    <button class="colorbutton" onclick="setColor('#FF77A8')" style="background-color:#FF77A8;"></button>
-    <button class="colorbutton" onclick="setColor('#FFCCAA')" style="background-color:#FFCCAA;"></button>
-    <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
-    <br>
-    <input type="range" id="rotation" min="0" max="3" value="0" onchange="setRotation(this.value)">
+    <div id="topBar">
+      <div class="toolbar">
+        <div class="toolbarRow">
+          <button onclick="toggleMenu(this)"><img src="assets/menu-burger.png"></button>
+          <button disabled onclick="undo()"><img src="assets/undo.png"></button>
+          <button disabled onclick="redo()"><img src="assets/redo.png"></button>
+          <button class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+        </div>
+      </div>
+      <div id="menu" class="sideMenu" style="display: none;">
+        <span>Canvas Size: <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32"> by <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32"> <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button></span>
+        <button onclick="clearCanvas()">Clear Canvas</button>
+        <span style="display: flex;gap:5px;"><input style="flex-grow: 1;background-color:var(--white);" class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+      </div>
+    </div>
+    <div id="bottomBar">
+      <div class="toolbar">
+        <div class="toolbarRow">
+          <button id="selectedButton" class="selected" onclick="selectButton(this);setShape('rect');setTool('draw')">◼</button>
+          <button onclick="selectButton(this);setShape('ellipse');setTool('draw')">●</button>
+          <button onclick="selectButton(this);setShape('quadrant');setTool('draw')">◔</button>
+          <button onclick="selectButton(this);setShape('inverseQuadrant');setTool('draw')">◝</button>
+          <button onclick="selectButton(this);setShape('wedge');setTool('draw')">◣</button>
+          <button onclick="selectButton(this);setTool('erase')"><img src="assets/eraser.png"></button>
+          <button onclick="selectButton(this);setTool('select')"><img src="assets/square-dashed.png"></button>
+          <button onclick="selectButton(this);setTool('fill')"><img src="assets/paint-brush.png"></button>
+          <button onclick="selectButton(this);setTool('back')"><img src="assets/arrow-to-bottom.png"></button>
+          <button onclick="selectButton(this);setTool('front')"><img src="assets/arrow-to-top.png"></button>
+        </div>
+        <div class="toolbarRow">
+          <span id="colorPalette"></span>
+          <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
+        </div>
+      </div>
+      <div class="toolbar extraBar" style="display:none;" id="selectionTools">
+        <div class="toolbarRow">
+          <button onclick="cancelSelection()"><img src="assets/cross.png"></button>
+          <button onclick="groupSelection()"><img src="assets/link-alt.png"></button>
+          <button onclick="ungroupSelection()"><img src="assets/link-slash-alt.png"></button>
+          <button onclick="duplicateSelection()"><img src="assets/copy.png"></button>
+          <button disabled onclick="rotateSelection(1)"><img src="assets/rotate.png"></button>
+          <button disabled onclick="rotateSelection(-1)"><img src="assets/rotate-reverse.png"></button>
+          <button disabled><img src="assets/reflect-horizontal.png"></button>
+          <button disabled><img src="assets/reflect-vertical.png"></button>
+          <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

@@ -1,0 +1,139 @@
+:root {
+    --black: #1e152a;
+    --gray: #4e5567;
+    --white: #F2F7F8;
+    --highlight-1: #5ab1bb;
+    --highlight-2: #a5c882;
+    --highlight-3: #f7dd72;
+}
+body {
+    background-color: var(--black);
+    color: white;
+    text-align:center;
+    margin: 0;
+    padding:0;
+}
+div {
+    background-color: var(--gray);
+}
+button, input {
+    background-color: var(--highlight-1);
+    border: none;
+    padding: 5px;
+    min-width:30px;
+    min-height:30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+button:hover, input:hover {
+    background-color: var(--highlight-2);
+} 
+button:disabled {
+    background-color: var(--gray);
+    cursor: auto;
+}
+button img {
+    width: 20px;
+}
+.selected {
+    transform: translate(0, -5px);
+    box-shadow: 0 5px var(--white);
+}
+.highlighted {
+    background-color: var(--highlight-3);
+}
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--gray);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--highlight-1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--highlight-2);
+}
+main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width:100vw;
+    height:100vh;
+    overflow: hidden;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+}
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    /*overflow-x: scroll;*/
+    overflow: hidden;
+    align-items: stretch;
+    align-self: stretch;
+}
+.toolbarRow {
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+}
+.toolbarRow > button {
+    flex-grow: 1;
+}
+.toolbarRow > :nth-last-child(n+2) {
+    margin-right: 2px;
+}
+.toolbarRow > span {
+    flex-grow: 1;
+    display:flex;
+}
+.toolbarRow > span > button {
+    flex-grow: 1;
+}
+.extraBar {
+    align-self:center;
+}
+.sideMenu {
+    min-width:50%;
+    align-self: baseline;
+    padding:10px;
+    display:flex;
+    flex-direction: column;
+    gap: 5px;
+}
+#topBar {
+    background: none;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right:5px;
+    display:flex;
+    gap: 10px;
+    align-items: center;
+    flex-direction: column;
+}
+#bottomBar {
+    background: none;
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    right:5px;
+    display:flex;
+    gap: 10px;
+    align-items: center;
+    flex-direction: column-reverse;
+}
+.inlineInput {
+    display: inline-block;
+    padding-top: 0;
+    padding-bottom: 0;
+    text-align: center;
+}
+#canvasContainer {
+    padding: 10px;
+}
