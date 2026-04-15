@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
+    <script src="scripts/shapes.js"></script>
+    <script src="scripts/sketch.js"></script>
+    <style>
+        .colorbutton {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+        }
+    </style>
+  </head>
+  <body>
+    <main>
+    </main>
+    <button onclick="setTool('draw')">✏</button>
+    <button onclick="setTool('erase')">🧹</button>
+    <button onclick="setTool('select')">🛒</button>
+    <button onclick="setTool('fill')">🎨</button>
+    <button onclick="setTool('back')">⏮</button>
+    <button onclick="setTool('front')">⏭</button>
+    <span id="selectionContextButtons">
+      <button onclick="groupSelection()">❤️‍🩹</button>
+      <button onclick="ungroupSelection()">💔</button>
+      <button onclick="duplicateSelection()">💕</button>
+      <button onclick="rotateSelection(1)">↩</button>
+      <button onclick="rotateSelection(-1)">↪</button>
+    </span>
+    <button onclick="clearCanvas()">💣</button>
+    <br>
+    <button onclick="setShape('rect');setTool('draw')">⏹</button>
+    <button onclick="setShape('ellipse');setTool('draw')">⏺</button>
+    <button onclick="setShape('quadrant');setTool('draw')">🌖</button>
+    <button onclick="setShape('inverseQuadrant');setTool('draw')">🌘</button>
+    <button onclick="setShape('wedge');setTool('draw')">▶</button>
+    <br>
+    <button class="colorbutton" onclick="setColor('#000000')" style="background-color:#000000;"></button>
+    <button class="colorbutton" onclick="setColor('#1D2B53')" style="background-color:#1D2B53;"></button>
+    <button class="colorbutton" onclick="setColor('#7E2553')" style="background-color:#7E2553;"></button>
+    <button class="colorbutton" onclick="setColor('#008751')" style="background-color:#008751;"></button>
+    <button class="colorbutton" onclick="setColor('#AB5236')" style="background-color:#AB5236;"></button>
+    <button class="colorbutton" onclick="setColor('#5F574F')" style="background-color:#5F574F;"></button>
+    <button class="colorbutton" onclick="setColor('#C2C3C7')" style="background-color:#C2C3C7;"></button>
+    <button class="colorbutton" onclick="setColor('#FFF1E8')" style="background-color:#FFF1E8;"></button>
+    <button class="colorbutton" onclick="setColor('#FF004D')" style="background-color:#FF004D;"></button>
+    <button class="colorbutton" onclick="setColor('#FFA300')" style="background-color:#FFA300;"></button>
+    <button class="colorbutton" onclick="setColor('#FFEC27')" style="background-color:#FFEC27;"></button>
+    <button class="colorbutton" onclick="setColor('#00E436')" style="background-color:#00E436;"></button>
+    <button class="colorbutton" onclick="setColor('#29ADFF')" style="background-color:#29ADFF;"></button>
+    <button class="colorbutton" onclick="setColor('#83769C')" style="background-color:#83769C;"></button>
+    <button class="colorbutton" onclick="setColor('#FF77A8')" style="background-color:#FF77A8;"></button>
+    <button class="colorbutton" onclick="setColor('#FFCCAA')" style="background-color:#FFCCAA;"></button>
+    <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
+    <br>
+    <input type="range" id="rotation" min="0" max="3" value="0" onchange="setRotation(this.value)">
+  </body>
+</html>
