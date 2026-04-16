@@ -1,30 +1,5 @@
 
-let shapes = {
-    rect: Rect,
-    ellipse: Ellipse,
-    quadrant: Quadrant,
-    inverseQuadrant: InverseQuadrant,
-    wedge: Wedge,
-    bezierWedge: BezierWedge
-}
-
-let displaySize = 64;
-let shouldDrawGrid = true;
-let drawUI = true;
-let selectingTools = ['erase', 'select', 'paint'];
-let currentTool = 'draw';
-let currentShape = 'rect';
-let currentColor = '#000000';
-let currentStartX = 0;
-let currentStartY = 0;
-let currentEndX = 0;
-let currentEndY = 0;
-let currentRotation = 0;
-let currentLayer = 0;
-let movingSelection = false;
-let canvasScale = 1;
-let canvasXOffset = 0;
-let canvasYOffset = 0;
+let tileCanvas;
 
 let defaultPalette = ["#000000", "#1D2B53", "#7E2553", "#008751", "#AB5236", "#5F574F", "#C2C3C7", "#FFF1E8", "#FF004D", "#FFA300", "#FFEC27", "#00E436", "#29ADFF", "#83769C", "#FF77A8", "#FFCCAA"];
 
@@ -39,25 +14,12 @@ function loadColors(colors) {
     }
 }
 
-function undo() {
-
-}
-
-function redo() {
-
-}
-
 function getMouseX() {
     return mouseX / canvasScale;
 }
 
 function getMouseY() {
     return mouseY / canvasScale;
-}
-
-function toggleGrid(button) {
-    shouldDrawGrid = !shouldDrawGrid;
-    button.classList = shouldDrawGrid ? ["highlighted"] : []
 }
 
 function toggleMenu(id, button) {
@@ -70,19 +32,33 @@ function toggleMenu(id, button) {
     }
 }
 
-function downloadCanvas() {
-    drawUI = false;
-    redraw();
-    saveCanvas(document.getElementById("fileName").value);
-    drawUI = true;
+function selectButton(button) {
+    let currentButtons = document.getElementsByClassName("selectedButton");
+    for(let b of currentButtons) {
+        b.classList = [];
+    }
+    button.classList.add("selectedButton");
 }
 
-function setShape(shape) {
-    currentShape = shape;
+function undo() {
+    tileCanvas.undo();
+}
+
+function redo() {
+    tileCanvas.redo();
+}
+
+function toggleGrid(button) {
+    tileCanvas.toggleGrid();
+    button.classList = shouldDrawGrid ? ["highlighted"] : []
+}
+
+function downloadCanvas() {
+    tileCanvas.downloadCanvas(document.getElementById("fileName").value);
 }
 
 function setColor(color) {
-    currentColor = color;
+    tileCanvas.setColor(color);
     let current = document.getElementById("selectedColor");
     if(current) {
         current.id = "";
@@ -99,22 +75,16 @@ function setColor(color) {
 
 
 function setCanvasSize(w, h) {
-    resizeCanvas(w*displaySize, h*displaySize);
+    resizeCanvas(w*tileCanvas.resolution, h*tileCanvas.resolution);
 }
 
 function setRotation(rotation) {
-    currentRotation = rotation;
+    tileCanvas.setRotation(rotation);
 }
 
-function selectButton(button) {
-    let currentButtons = document.getElementsByClassName("selectedButton");
-    for(let b of currentButtons) {
-        b.classList = [];
-    }
-    button.classList.add("selectedButton");
-}
 
 function setTool(tool) {
+    tileCanvas.setTool(tool);
     for(let node of document.getElementsByClassName("toolButton")) {
         if(node.internalTool == tool) {
             node.id = "selectedColor";
@@ -122,112 +92,75 @@ function setTool(tool) {
             break;
         }
     }
-    if(selection.length > 0) {
-        switch(tool) {
-            case 'select':
-                selection = [];
-                break;
-            case 'paint':
-                for(let shape of selection) {
-                    shape.recolor(currentColor);
-                }
-                break;
-        }
-    }
-    currentTool = tool;
 }
 
-function cancelSelection() {
-    selection = [];
-}
+// function cancelSelection() {
+//     selection = [];
+// }
 
-function groupSelection() {
-    if(selection.length > 1) {
-        let newGroup = new Group(layers[currentLayer]);
-        for(let shape of selection) {
-            newGroup.addChild(layers[currentLayer].removeChild(shape));
-        }
-        layers[currentLayer].addChild(newGroup);
-        selection = [newGroup];
-    }
-}
+// function groupSelection() {
+//     if(selection.length > 1) {
+//         let newGroup = new Group(layers[currentLayer]);
+//         for(let shape of selection) {
+//             newGroup.addChild(layers[currentLayer].removeChild(shape));
+//         }
+//         layers[currentLayer].addChild(newGroup);
+//         selection = [newGroup];
+//     }
+// }
 
-function ungroupSelection() {
-    let newSelection = [];
-    for(let shape of selection) {
-        if(shape instanceof Group) {
-            newSelection.push(...shape.dissolve());
-        }
-    }
-    selection = newSelection;
-}
+// function ungroupSelection() {
+//     let newSelection = [];
+//     for(let shape of selection) {
+//         if(shape instanceof Group) {
+//             newSelection.push(...shape.dissolve());
+//         }
+//     }
+//     selection = newSelection;
+// }
 
-function duplicateSelection() {
-    let newSelection = [];
-    for(let shape of selection) {
-        let clone = shape.clone(1, 1);
-        shape.parent.addChild(clone);
-        newSelection.push(clone);
-    }
-    selection = newSelection;
-}
+// function duplicateSelection() {
+//     let newSelection = [];
+//     for(let shape of selection) {
+//         let clone = shape.clone(1, 1);
+//         shape.parent.addChild(clone);
+//         newSelection.push(clone);
+//     }
+//     selection = newSelection;
+// }
 
-function backSelection() {
-    for(let shape of selection) {
-        shape.parent.sendToBack(shape);
-    }
-}
+// function backSelection() {
+//     for(let shape of selection) {
+//         shape.parent.sendToBack(shape);
+//     }
+// }
 
-function frontSelection() {
-    for(let shape of selection) {
-        shape.parent.sendToFront(shape);
-    }
-}
+// function frontSelection() {
+//     for(let shape of selection) {
+//         shape.parent.sendToFront(shape);
+//     }
+// }
 
-function rotateSelection(direction) {
-    if(direction > 0) {
+// function rotateSelection(direction) {
+//     if(direction > 0) {
         
-    } else {
+//     } else {
 
-    }
-}
+//     }
+// }
 
-function eraseSelection() {
-    console.log(selection)
-    for(let shape of selection) {
-        console.log('erase');
-        shape.erase();
-    }
-    selection = [];
-}
-
-function drawGrid() {
-    strokeWeight(1);
-    stroke(200);
-    for (let x = 0; x < width; x += layers[currentLayer].getGridSize()) {
-        line(x, 0, x, height);
-    }
-    for (let y = 0; y < height; y += layers[currentLayer].getGridSize()) {
-        line(0, y, width, y);
-    }
-}
+// function eraseSelection() {
+//     console.log(selection)
+//     for(let shape of selection) {
+//         console.log('erase');
+//         shape.erase();
+//     }
+//     selection = [];
+// }
 
 function clearCanvas() {
-    layers = [new Layer(displaySize)];
+    tileCanvas.clear();
     selection = [];
-}
-
-function getFirstCollidingShape(x, y) {
-    for (let i = layers.length - 1; i >= 0; i--) {
-        let layer = layers[i];
-        for(let j = layer.size() - 1; j >= 0; j--) {
-            let shape = layer.getChild(j);
-            if(shape.collidesWith(x, y)) {
-                return shape;
-            }
-        }
-    }
-    return null;
 }
 
 function collidesWithSelection(x, y) {
@@ -242,6 +175,7 @@ function collidesWithSelection(x, y) {
 let canvas;
 function setup() {
     let c = createCanvas(32*displaySize, 32*displaySize);
+    tileCanvas = new TileCanvas(c);
     c.parent('canvasContainer');
     canvas = document.getElementById("canvasContainer").firstChild;
     for (let element of document.getElementsByClassName("p5Canvas")) {
@@ -254,8 +188,10 @@ function setup() {
     noSmooth();
 }
 
-let layers = [new Layer(displaySize)];
 let selection = [];
+let canvasScale = 1;
+let canvasXOffset = 0;
+let canvasYOffset = 0;
 
 function draw() {
     clear();
@@ -268,16 +204,6 @@ function draw() {
     if(currentTool == 'select' && movingSelection) {
         offsetX = currentEndX - currentStartX;
         offsetY = currentEndY - currentStartY;
-    }
-    for (let layer of layers) {
-        for(let shape of layer) {
-            noStroke();
-            if(selection.includes(shape)) {
-                shape.drawWithOffset(offsetX, offsetY);
-            } else {
-                shape.draw();
-            }
-        }
     }
     if(drawUI) {
         if(shouldDrawGrid) {
