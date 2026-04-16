@@ -13,32 +13,38 @@
     <div id="topBar">
       <div class="toolbar">
         <div class="toolbarRow">
-          <button onclick="toggleMenu(this)"><img src="assets/menu-burger.png"></button>
+          <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
           <button disabled onclick="undo()"><img src="assets/undo.png"></button>
           <button disabled onclick="redo()"><img src="assets/redo.png"></button>
-          <button class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+          <button id="gridButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+          <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
         </div>
       </div>
-      <div id="menu" class="sideMenu" style="display: none;">
-        <span>Canvas Size: <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32"> by <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32"> <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button></span>
-        <button onclick="clearCanvas()">Clear Canvas</button>
-        <span style="display: flex;gap:5px;"><input style="flex-grow: 1;background-color:var(--white);" class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+      <div class="sideMenuContainer">
+        <div id="menu" class="sideMenu" style="display: none;">
+          <h3>Settings</h3>
+          <span>Canvas Size: <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32"> by <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32"> <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button></span>
+          <button onclick="clearCanvas()">Clear Canvas</button>
+          <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+        </div>
+        <div id="layers" class="sideMenu" style="display: none;float:right;">
+          Not done
+        </div>
       </div>
     </div>
     <div id="bottomBar">
       <div class="toolbar">
         <div class="toolbarRow">
-          <button id="selectedButton" class="selected" onclick="selectButton(this);setShape('rect');setTool('draw')">◼</button>
-          <button onclick="selectButton(this);setShape('ellipse');setTool('draw')">●</button>
-          <button onclick="selectButton(this);setShape('quadrant');setTool('draw')">◔</button>
-          <button onclick="selectButton(this);setShape('inverseQuadrant');setTool('draw')">◝</button>
-          <button onclick="selectButton(this);setShape('wedge');setTool('draw')">◣</button>
-          <button onclick="selectButton(this);setShape('bezierWedge');setTool('draw')">bw</button>
-          <button onclick="selectButton(this);setTool('erase')"><img src="assets/eraser.png"></button>
-          <button onclick="selectButton(this);setTool('select')"><img src="assets/square-dashed.png"></button>
-          <button onclick="selectButton(this);setTool('fill')"><img src="assets/paint-brush.png"></button>
-          <button onclick="selectButton(this);setTool('back')"><img src="assets/arrow-to-bottom.png"></button>
-          <button onclick="selectButton(this);setTool('front')"><img src="assets/arrow-to-top.png"></button>
+          <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
+          <button id="rectButton" class="selected selectedButton" onclick="selectButton(this);setShape('rect');setTool('draw')"><img src="assets/square.png"></button>
+          <button id="ellipseButton" onclick="selectButton(this);setShape('ellipse');setTool('draw')"><img src="assets/circle.png"></button>
+          <button id="quadrantButton" onclick="selectButton(this);setShape('quadrant');setTool('draw')"><img src="assets/quadrant.png"></button>
+          <button id="inverseQuadrantButton" onclick="selectButton(this);setShape('inverseQuadrant');setTool('draw')"><img src="assets/inverseQuadrant.png"></button>
+          <button id="wedgeButton" onclick="selectButton(this);setShape('wedge');setTool('draw')"><img src="assets/wedge.png"></button>
+          <button id="bezierWedgeButton" onclick="selectButton(this);setShape('bezierWedge');setTool('draw')">bw</button>
+          <button id="eraseButton" onclick="selectButton(this);setTool('erase')"><img src="assets/eraser.png"></button>
+          <button id="paintButton" onclick="selectButton(this);setTool('paint')"><img src="assets/paint-brush.png"></button>
+          <button id="selectButton" onclick="selectButton(this);setTool('select')"><img src="assets/square-dashed.png"></button>
         </div>
         <div class="toolbarRow">
           <span id="colorPalette"></span>
@@ -55,7 +61,33 @@
           <button disabled onclick="rotateSelection(-1)"><img src="assets/rotate-reverse.png"></button>
           <button disabled><img src="assets/reflect-horizontal.png"></button>
           <button disabled><img src="assets/reflect-vertical.png"></button>
+          <button onclick="backSelection()"><img src="assets/arrow-to-bottom.png"></button>
+          <button onclick="frontSelection()"><img src="assets/arrow-to-top.png"></button>
           <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
+        </div>
+      </div>
+      <div class="sideMenuContainer">
+        <div id="toolSettings" class="sideMenu" style="display: none;">
+          <h3>Tool Settings (not implemented)</h3>
+          <span>
+            <span style="width:40%;">Replacement Mode:</span>
+            <select>
+              <option value="identical">Identical</option>
+              <option value="none">None</option>
+              <option value="all">All</option>
+            </select>
+          </span>
+          <span>
+            <span style="width:40%;">Drag Mode:</span>
+            <select>
+              <option value="scale">Scale</option>
+              <option value="draw">Draw</option>
+            </select>
+          </span>
+          <span>
+            <span style="flex-grow:1;">Rotate While Dragging:</span>
+            <input style="flex-grow:unset;" type="checkbox" checked="checked">
+          </span>
         </div>
       </div>
     </div>

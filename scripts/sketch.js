@@ -8,10 +8,10 @@ let shapes = {
     bezierWedge: BezierWedge
 }
 
-let displaySize = 32;
+let displaySize = 64;
 let shouldDrawGrid = true;
 let drawUI = true;
-let selectingTools = ['erase', 'select', 'fill', 'back', 'front'];
+let selectingTools = ['erase', 'select', 'paint'];
 let currentTool = 'draw';
 let currentShape = 'rect';
 let currentColor = '#000000';
@@ -60,12 +60,12 @@ function toggleGrid(button) {
     button.classList = shouldDrawGrid ? ["highlighted"] : []
 }
 
-function toggleMenu(button) {
-    if(document.getElementById("menu").style.display === "none") {
-        document.getElementById("menu").style = null;
+function toggleMenu(id, button) {
+    if(document.getElementById(id).style.display === "none") {
+        document.getElementById(id).style.display = null;
         button.classList = ["highlighted"];
     } else {
-        document.getElementById("menu").style = "display: none;";
+        document.getElementById(id).style.display = "none";
         button.classList = [];
     }
 }
@@ -107,13 +107,11 @@ function setRotation(rotation) {
 }
 
 function selectButton(button) {
-    let current = document.getElementById("selectedButton");
-    if(current) {
-        current.id = "";
-        current.classList = [];
+    let currentButtons = document.getElementsByClassName("selectedButton");
+    for(let b of currentButtons) {
+        b.classList = [];
     }
-    button.id = "selectedButton";
-    button.classList = ["selected"];
+    button.classList.add("selectedButton");
 }
 
 function setTool(tool) {
@@ -129,19 +127,9 @@ function setTool(tool) {
             case 'select':
                 selection = [];
                 break;
-            case 'fill':
+            case 'paint':
                 for(let shape of selection) {
                     shape.recolor(currentColor);
-                }
-                break;
-            case 'back':
-                for(let shape of selection) {
-                    shape.parent.sendToBack(shape);
-                }
-                break;
-            case 'front':
-                for(let shape of selection) {
-                    shape.parent.sendToFront(shape);
                 }
                 break;
         }
@@ -178,9 +166,22 @@ function duplicateSelection() {
     let newSelection = [];
     for(let shape of selection) {
         let clone = shape.clone(1, 1);
+        shape.parent.addChild(clone);
         newSelection.push(clone);
     }
     selection = newSelection;
+}
+
+function backSelection() {
+    for(let shape of selection) {
+        shape.parent.sendToBack(shape);
+    }
+}
+
+function frontSelection() {
+    for(let shape of selection) {
+        shape.parent.sendToFront(shape);
+    }
 }
 
 function rotateSelection(direction) {
@@ -257,7 +258,7 @@ let layers = [new Layer(displaySize)];
 let selection = [];
 
 function draw() {
-    background(255);
+    clear();
     let hoveredShape = null;
     if(selectingTools.includes(currentTool)) {
         hoveredShape = getFirstCollidingShape(getMouseX(), getMouseY());
@@ -272,7 +273,6 @@ function draw() {
         for(let shape of layer) {
             noStroke();
             if(selection.includes(shape)) {
-                noStroke();
                 shape.drawWithOffset(offsetX, offsetY);
             } else {
                 shape.draw();
@@ -292,21 +292,28 @@ function draw() {
         }
         if(getMouseX() > 0 && getMouseX() < width && getMouseY() > 0 && getMouseY() < height) {
             if(mouseIsPressed) {
-                currentEndX = floor(getMouseX()/layers[currentLayer].getGridSize());
-                currentEndY = floor(getMouseY()/layers[currentLayer].getGridSize());
-                if(currentTool == 'draw') {
-                    let sX = min(currentStartX, currentEndX);
-                    let sY = min(currentStartY, currentEndY);
-                    let eX = max(currentStartX, currentEndX);
-                    let eY = max(currentStartY, currentEndY);
+                if(mouseButton == "left") {
+                    currentEndX = layers[currentLayer].toLC(getMouseX());
+                    currentEndY = layers[currentLayer].toLC(getMouseY());
+                    if(currentTool == 'draw') {
+                        let sX = min(currentStartX, currentEndX);
+                        let sY = min(currentStartY, currentEndY);
+                        let eX = max(currentStartX, currentEndX);
+                        let eY = max(currentStartY, currentEndY);
 
-                    fill(currentColor);
-                    shapes[currentShape].drawRaw(sX, sY, eX, eY, currentRotation, layers[currentLayer]);
-                    
-                    stroke(255, 0, 0);
-                    strokeWeight(3);
-                    noFill();
-                    rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
+                        fill(currentColor);
+                        noStroke();
+                        shapes[currentShape].drawRaw(sX, sY, eX, eY, currentRotation, layers[currentLayer]);
+                        
+                        stroke(255, 0, 0);
+                        strokeWeight(3);
+                        noFill();
+                        rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
+                    }
+                } else {
+                    canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
+                    canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
+                    document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
                 }
             } else {
                 currentStartX = floor(getMouseX()/layers[currentLayer].getGridSize());
@@ -315,13 +322,14 @@ function draw() {
                 currentEndY = floor(getMouseY()/layers[currentLayer].getGridSize());
                 if(currentTool == 'draw') {
                     fill(currentColor);
+                    noStroke();
                     shapes[currentShape].drawRaw(currentStartX, currentStartY, currentEndX, currentEndY, currentRotation, layers[currentLayer]);
                 }
             }
         } else {
             if(mouseIsPressed) {
-                canvasXOffset += globalMouse.x - globalMouse2.x;
-                canvasYOffset += globalMouse.y - globalMouse2.y;
+                canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
+                canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
                 document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
             }
         }
@@ -361,6 +369,47 @@ function draw() {
     globalMouse2.y = globalMouse.y;
 }
 
+function keyPressed() {
+    if(key === 'r') {
+        selectButton(document.getElementById("rectButton"));
+        setShape("rect");
+        setTool("draw");
+    } else if(key === 'c') {
+        selectButton(document.getElementById("ellipseButton"));
+        setShape("ellipse");
+        setTool("draw");
+    } else if(key === 'q') {
+        selectButton(document.getElementById("quadrantButton"));
+        setShape("quadrant");
+        setTool("draw");
+    } else if(key === 'i') {
+        selectButton(document.getElementById("inverseQuadrantButton"));
+        setShape("inverseQuadrant");
+        setTool("draw");
+    } else if(key === 'w') {
+        selectButton(document.getElementById("wedgeButton"));
+        setShape("wedge");
+        setTool("draw");
+    } else if(key === 'b') {
+        selectButton(document.getElementById("bezierWedgeButton"));
+        setShape("bezierWedge");
+        setTool("draw");
+    } else if(key === 'e') {
+        selectButton(document.getElementById("eraseButton"));
+        setTool("erase");
+    } else if(key === 'p') {
+        selectButton(document.getElementById("paintButton"));
+        setTool("paint");
+    } else if(key === 's') {
+        selectButton(document.getElementById("selectButton"));
+        setTool("select");
+    } else if(key === 'g') {
+        toggleGrid(document.getElementById("gridButton"));
+    } else if(key === 'l') {
+        toggleMenu('layers', document.getElementById("layerMenuButton"));
+    }
+}
+
 function mousePressed(event) {
     if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
         return;
@@ -382,22 +431,10 @@ function mousePressed(event) {
                 targetShape.erase();
             }
             break;
-        case 'fill':
+        case 'paint':
             targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
             if(targetShape) {
                 targetShape.recolor(currentColor);
-            }
-            break;
-        case 'back':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.parent.sendToBack(targetShape);
-            }
-            break;
-        case 'front':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.parent.sendToFront(targetShape);
             }
             break;
     }
@@ -405,6 +442,9 @@ function mousePressed(event) {
 
 function mouseReleased() {
     if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
+        return;
+    }
+    if(mouseButton != "left") {
         return;
     }
     switch(currentTool) {
@@ -463,13 +503,13 @@ function mouseDragged() {
     let targetShape;
     switch(currentTool) {
         case 'draw':
-            if (currentEndX > currentStartX && currentEndY > currentStartY) {
+            if (getMouseX() > layers[currentLayer].toSC(currentStartX) && getMouseY() > layers[currentLayer].toSC(currentStartY)) {
                 setRotation(2);
-            } else if (currentEndX < currentStartX && currentEndY > currentStartY) {
+            } else if (getMouseX() < layers[currentLayer].toSC(currentStartX) && getMouseY() > layers[currentLayer].toSC(currentStartY)) {
                 setRotation(3);
-            } else if (currentEndX < currentStartX && currentEndY < currentStartY) {
+            } else if (getMouseX() < layers[currentLayer].toSC(currentStartX) && getMouseY() < layers[currentLayer].toSC(currentStartY)) {
                 setRotation(0);
-            } else if (currentEndX > currentStartX && currentEndY < currentStartY) {
+            } else if (getMouseX() > layers[currentLayer].toSC(currentStartX) && getMouseY() < layers[currentLayer].toSC(currentStartY)) {
                 setRotation(1);
             }
             break;
@@ -479,7 +519,7 @@ function mouseDragged() {
                 targetShape.erase();
             }
             break;
-        case 'fill':
+        case 'paint':
             targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
             if(targetShape) {
                 targetShape.color = currentColor;

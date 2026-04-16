@@ -15,6 +15,9 @@ class Layer {
         this.gridScale = 1;
         this.displaySize = displaySize;
     }
+    toLC(x) {//To Layer Coordinate (From Screen)
+        return  floor(x/this.getGridSize())
+    }
     toSC(x) {//To Screen Coordinate
         return (x + 0.5) * this.getGridSize();
     }
@@ -331,8 +334,8 @@ class Ellipse extends Tile {
         ellipse(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
-        let centerX = cc(sX + (eX - sX) / 2, layer.getGridSize());
-        let centerY = cc(sY + (eY - sY) / 2, layer.getGridSize());
+        let centerX = layer.toSC(sX + (eX - sX) / 2);
+        let centerY = layer.toSC(sY + (eY - sY) / 2);
         let radiusX = (layer.toSCF(sX) - layer.toSCC(eX)) / 2;
         let radiusY = (layer.toSCF(sY) - layer.toSCC(eY)) / 2;
         return inEllipse(centerX, centerY, radiusX, radiusY, mouseX, mouseY);
@@ -351,13 +354,13 @@ class Quadrant extends Tile {
                 arc(layer.toSCF(sX - w), layer.toSCF(sY - h), layer.toSCC(eX), layer.toSCC(eY), 0, HALF_PI);
                 break;
             case 1:
-                arc(layer.toSCF(sX), layer.toSCF(sY - h), layer.toSCC(sX + w), layer.toSCC(eY), HALF_PI, PI);
+                arc(layer.toSCF(sX), layer.toSCF(sY - h), layer.toSCC(eX + w), layer.toSCC(eY), HALF_PI, PI);
                 break;
             case 2:
-                arc(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(sX + w), layer.toSCC(sY + h), PI, PI + HALF_PI);
+                arc(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX + w), layer.toSCC(eY + h), PI, PI + HALF_PI);
                 break;
             case 3:
-                arc(layer.toSCF(sX - w), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(sY + h), PI + HALF_PI, TWO_PI);
+                arc(layer.toSCF(sX - w), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY + h), PI + HALF_PI, TWO_PI);
                 break;
         }
     }
@@ -423,7 +426,7 @@ class InverseQuadrant extends Tile {
     static drawRaw(sX, sY, eX, eY, r, layer) {
         push();
         let mask = function() {
-            Quadrant.drawRaw(sX, sY, eX, eY, r, layer);
+            Quadrant.drawRaw(sX, sY, eX, eY, (r+2)%4, layer);
         }
         clip(mask, { invert: true });
         Rect.drawRaw(sX, sY, eX, eY, r, layer);
@@ -481,7 +484,7 @@ class InverseQuadrant extends Tile {
                 eEY += h;
                 break;
         }
-        return Rect.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && !Ellipse.checkCollision(eSX, eSY, eEX, eEY, r, layer, mouseX, mouseY);
+        return Rect.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && !Ellipse.checkCollision(eSX, eSY, eEX, eEY, (r+2)%4, layer, mouseX, mouseY);
     }
 }
 
@@ -528,6 +531,12 @@ class BezierWedge extends Wedge {
         this.endControlX = c.x2;
         this.endControlY = c.y2;
     }
+    move(offsetX, offsetY) {
+        this.startControlX += offsetX;
+        this.startControlY += offsetY;
+        this.endControlX += offsetX;
+        this.endControlY += offsetY;
+    }
     static getStartControls(sX, sY, eX, eY, r) {
         let corners = [
             {x: sX - 0.5, y: eY + 0.5},
@@ -561,6 +570,10 @@ class BezierWedge extends Wedge {
         fill(this.color);
         BezierWedge.drawRaw2(this.startX, this.startY, this.endX, this.endY, this.startControlX, this.startControlY, this.endControlX, this.endControlY, this.rotation, this.getLayer());
         //this.drawControls();
+    }
+    drawOutline() {
+        super.drawOutline();
+        this.drawControls();
     }
     drawControls() {
         let corners = [

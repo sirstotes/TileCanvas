@@ -16,7 +16,7 @@ body {
 div {
     background-color: var(--gray);
 }
-button, input {
+button, input, select {
     background-color: var(--highlight-1);
     border: none;
     padding: 5px;
@@ -31,13 +31,13 @@ button:hover, input:hover {
     background-color: var(--highlight-2);
 } 
 button:disabled {
-    background-color: var(--gray);
+    background-color: var(--black);
     cursor: auto;
 }
 button img {
     width: 20px;
 }
-.selected {
+.selected, .selectedButton {
     transform: translate(0, -5px);
     box-shadow: 0 5px var(--white);
 }
@@ -98,13 +98,26 @@ main {
 .extraBar {
     align-self:center;
 }
+.sideMenuContainer {
+    align-self:stretch;
+    background:none;
+}
 .sideMenu {
-    min-width:50%;
-    align-self: baseline;
+    float: left;
     padding:10px;
     display:flex;
     flex-direction: column;
     gap: 5px;
+}
+.sideMenu > span {
+    display: flex;
+    align-items: center;
+    gap:5px;
+    text-align: left;
+}
+.sideMenu > span > input, .sideMenu > span > select {
+    flex-grow: 1;
+    background-color:var(--white);
 }
 #topBar {
     background: none;
