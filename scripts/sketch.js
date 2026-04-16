@@ -4,7 +4,8 @@ let shapes = {
     ellipse: Ellipse,
     quadrant: Quadrant,
     inverseQuadrant: InverseQuadrant,
-    wedge: Wedge
+    wedge: Wedge,
+    bezierWedge: BezierWedge
 }
 
 let displaySize = 32;
@@ -305,7 +306,7 @@ function draw() {
                     stroke(255, 0, 0);
                     strokeWeight(3);
                     noFill();
-                    rect(sc(sX, layers[currentLayer].getGridSize()), sc(sY, layers[currentLayer].getGridSize()), ec(eX, layers[currentLayer].getGridSize()), ec(eY, layers[currentLayer].getGridSize()));
+                    rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
                 }
             } else {
                 currentStartX = floor(getMouseX()/layers[currentLayer].getGridSize());
@@ -339,7 +340,7 @@ function draw() {
                 let eX = max(currentStartX, currentEndX);
                 let eY = max(currentStartY, currentEndY);
                 drawingContext.setLineDash([10, 10]);
-                rect(sc(sX, layers[currentLayer].getGridSize()), sc(sY, layers[currentLayer].getGridSize()), ec(eX, layers[currentLayer].getGridSize()), ec(eY, layers[currentLayer].getGridSize()));
+                rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
                 drawingContext.setLineDash([]);
             }
             if(collidesWithSelection(getMouseX(), getMouseY())) {
@@ -361,7 +362,6 @@ function draw() {
 }
 
 function mousePressed(event) {
-    console.log(event.target)
     if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
         return;
     }
