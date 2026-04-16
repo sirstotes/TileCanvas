@@ -5,6 +5,7 @@
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
     <script src="scripts/shapes.js"></script>
     <script src="scripts/tools.js"></script>
+    <script src="scripts/selection.js"></script>
     <script src="scripts/maker.js"></script>
     <script src="scripts/sketch.js"></script>
   </head>
@@ -38,15 +39,15 @@
       <div class="toolbar">
         <div class="toolbarRow">
           <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
-          <button id="rectButton" class="selected selectedButton" onclick="selectButton(this);setShape('rect');setTool('draw')"><img src="assets/square.png"></button>
-          <button id="ellipseButton" onclick="selectButton(this);setShape('ellipse');setTool('draw')"><img src="assets/circle.png"></button>
-          <button id="quadrantButton" onclick="selectButton(this);setShape('quadrant');setTool('draw')"><img src="assets/quadrant.png"></button>
-          <button id="inverseQuadrantButton" onclick="selectButton(this);setShape('inverseQuadrant');setTool('draw')"><img src="assets/inverseQuadrant.png"></button>
-          <button id="wedgeButton" onclick="selectButton(this);setShape('wedge');setTool('draw')"><img src="assets/wedge.png"></button>
-          <button id="bezierWedgeButton" onclick="selectButton(this);setShape('bezierWedge');setTool('draw')">bw</button>
-          <button id="eraseButton" onclick="selectButton(this);setTool('erase')"><img src="assets/eraser.png"></button>
-          <button id="paintButton" onclick="selectButton(this);setTool('paint')"><img src="assets/paint-brush.png"></button>
-          <button id="selectButton" onclick="selectButton(this);setTool('select')"><img src="assets/square-dashed.png"></button>
+          <button id="rectButton" class="selected selectedButton" onclick="selectButton(this);setTool('RECT')"><img src="assets/square.png"></button>
+          <button id="ellipseButton" onclick="selectButton(this);setTool('ELLIPSE')"><img src="assets/circle.png"></button>
+          <button id="quadrantButton" onclick="selectButton(this);setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
+          <button id="inverseQuadrantButton" onclick="selectButton(this);setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
+          <button id="wedgeButton" onclick="selectButton(this);setTool('WEDGE')"><img src="assets/wedge.png"></button>
+          <button id="bezierWedgeButton" onclick="selectButton(this);setTool('BEZIER_WEDGE')">bw</button>
+          <button id="eraseButton" onclick="selectButton(this);setTool('ERASE')"><img src="assets/eraser.png"></button>
+          <button id="paintButton" onclick="selectButton(this);setTool('PAINT')"><img src="assets/paint-brush.png"></button>
+          <button id="selectButton" onclick="selectButton(this);setTool('SELECT')"><img src="assets/square-dashed.png"></button>
         </div>
         <div class="toolbarRow">
           <span id="colorPalette"></span>

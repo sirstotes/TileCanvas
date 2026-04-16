@@ -73,18 +73,12 @@ function setColor(color) {
     }
 }
 
-
 function setCanvasSize(w, h) {
     resizeCanvas(w*tileCanvas.resolution, h*tileCanvas.resolution);
 }
 
-function setRotation(rotation) {
-    tileCanvas.setRotation(rotation);
-}
-
-
 function setTool(tool) {
-    tileCanvas.setTool(tool);
+    tileCanvas.setTool(TileCanvas.TOOLS[tool]);
     for(let node of document.getElementsByClassName("toolButton")) {
         if(node.internalTool == tool) {
             node.id = "selectedColor";
@@ -94,88 +88,52 @@ function setTool(tool) {
     }
 }
 
-// function cancelSelection() {
-//     selection = [];
-// }
+function cancelSelection() {
+    tileCanvas.cancelSelection();
+}
 
-// function groupSelection() {
-//     if(selection.length > 1) {
-//         let newGroup = new Group(layers[currentLayer]);
-//         for(let shape of selection) {
-//             newGroup.addChild(layers[currentLayer].removeChild(shape));
-//         }
-//         layers[currentLayer].addChild(newGroup);
-//         selection = [newGroup];
-//     }
-// }
+function groupSelection() {
+    tileCanvas.groupSelection();
+}
 
-// function ungroupSelection() {
-//     let newSelection = [];
-//     for(let shape of selection) {
-//         if(shape instanceof Group) {
-//             newSelection.push(...shape.dissolve());
-//         }
-//     }
-//     selection = newSelection;
-// }
+function ungroupSelection() {
+    tileCanvas.ungroupSelection();
+}
 
-// function duplicateSelection() {
-//     let newSelection = [];
-//     for(let shape of selection) {
-//         let clone = shape.clone(1, 1);
-//         shape.parent.addChild(clone);
-//         newSelection.push(clone);
-//     }
-//     selection = newSelection;
-// }
+function duplicateSelection() {
+    tileCanvas.duplicateSelection();
+}
 
-// function backSelection() {
-//     for(let shape of selection) {
-//         shape.parent.sendToBack(shape);
-//     }
-// }
+function backSelection() {
+    tileCanvas.backSelection();
+}
 
-// function frontSelection() {
-//     for(let shape of selection) {
-//         shape.parent.sendToFront(shape);
-//     }
-// }
+function frontSelection() {
+    tileCanvas.frontSelection();
+}
 
-// function rotateSelection(direction) {
-//     if(direction > 0) {
-        
-//     } else {
+function rotateSelection(direction) {
+    tileCanvas.eraseSelection();
+}
 
-//     }
-// }
+function eraseSelection() {
+    tileCanvas.eraseSelection();
+}
 
-// function eraseSelection() {
-//     console.log(selection)
-//     for(let shape of selection) {
-//         console.log('erase');
-//         shape.erase();
-//     }
-//     selection = [];
-// }
+function insideCanvas(mouseX, mouseY) {
+    return mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height;
+}
 
 function clearCanvas() {
     tileCanvas.clear();
-    selection = [];
-}
-
-function collidesWithSelection(x, y) {
-    for(let shape of selection) {
-        if(shape.collidesWith(x, y)) {
-            return true;
-        }    
-    }
-    return false;
 }
 
 let canvas;
+let initialSize = 32;
+let initialResolution = 32;
 function setup() {
-    let c = createCanvas(32*displaySize, 32*displaySize);
-    tileCanvas = new TileCanvas(c);
+    let c = createCanvas(initialSize*initialResolution, initialSize*initialResolution);
+    tileCanvas = new TileCanvas(initialSize, initialSize, initialResolution);
     c.parent('canvasContainer');
     canvas = document.getElementById("canvasContainer").firstChild;
     for (let element of document.getElementsByClassName("p5Canvas")) {
@@ -188,109 +146,29 @@ function setup() {
     noSmooth();
 }
 
-let selection = [];
 let canvasScale = 1;
 let canvasXOffset = 0;
 let canvasYOffset = 0;
+let clickingOnCanvas = false;
 
 function draw() {
     clear();
-    let hoveredShape = null;
-    if(selectingTools.includes(currentTool)) {
-        hoveredShape = getFirstCollidingShape(getMouseX(), getMouseY());
-    }
-    let offsetX = 0;
-    let offsetY = 0;
-    if(currentTool == 'select' && movingSelection) {
-        offsetX = currentEndX - currentStartX;
-        offsetY = currentEndY - currentStartY;
-    }
-    if(drawUI) {
-        if(shouldDrawGrid) {
-            drawGrid();
-        }
-        if(hoveredShape) {
-            stroke(255, 0, 0);
-            strokeWeight(3);
-            drawingContext.setLineDash([10, 10]);
-            hoveredShape.drawOutline();
-            drawingContext.setLineDash([]);
-        }
-        if(getMouseX() > 0 && getMouseX() < width && getMouseY() > 0 && getMouseY() < height) {
-            if(mouseIsPressed) {
-                if(mouseButton == "left") {
-                    currentEndX = layers[currentLayer].toLC(getMouseX());
-                    currentEndY = layers[currentLayer].toLC(getMouseY());
-                    if(currentTool == 'draw') {
-                        let sX = min(currentStartX, currentEndX);
-                        let sY = min(currentStartY, currentEndY);
-                        let eX = max(currentStartX, currentEndX);
-                        let eY = max(currentStartY, currentEndY);
+    
+    tileCanvas.draw();
+    tileCanvas.update(getMouseX(), getMouseY(), clickingOnCanvas);
 
-                        fill(currentColor);
-                        noStroke();
-                        shapes[currentShape].drawRaw(sX, sY, eX, eY, currentRotation, layers[currentLayer]);
-                        
-                        stroke(255, 0, 0);
-                        strokeWeight(3);
-                        noFill();
-                        rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
-                    }
-                } else {
-                    canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
-                    canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
-                    document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
-                }
-            } else {
-                currentStartX = floor(getMouseX()/layers[currentLayer].getGridSize());
-                currentStartY = floor(getMouseY()/layers[currentLayer].getGridSize());
-                currentEndX = floor(getMouseX()/layers[currentLayer].getGridSize());
-                currentEndY = floor(getMouseY()/layers[currentLayer].getGridSize());
-                if(currentTool == 'draw') {
-                    fill(currentColor);
-                    noStroke();
-                    shapes[currentShape].drawRaw(currentStartX, currentStartY, currentEndX, currentEndY, currentRotation, layers[currentLayer]);
-                }
-            }
-        } else {
-            if(mouseIsPressed) {
-                canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
-                canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
-                document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
-            }
-        }
-        if(selection.length == 0) {
-            document.getElementById("selectionTools").style = "display: none;";
-        } else {
-            document.getElementById("selectionTools").style = "";
-        }
-        if(currentTool == 'select') {
-            if(selection.length == 0) {
-                stroke(255, 0, 0);
-                strokeWeight(3);
-                noFill();
-                let sX = min(currentStartX, currentEndX);
-                let sY = min(currentStartY, currentEndY);
-                let eX = max(currentStartX, currentEndX);
-                let eY = max(currentStartY, currentEndY);
-                drawingContext.setLineDash([10, 10]);
-                rect(layers[currentLayer].toSCF(sX), layers[currentLayer].toSCF(sY), layers[currentLayer].toSCC(eX), layers[currentLayer].toSCC(eY));
-                drawingContext.setLineDash([]);
-            }
-            if(collidesWithSelection(getMouseX(), getMouseY())) {
-                cursor(MOVE);
-            } else {
-                cursor(ARROW);
-            }
-        } else {
-            cursor(ARROW);
-        }
-        for(let shape of selection) {
-            stroke(0, 0, 255);
-            strokeWeight(3);
-            shape.drawOutline();
-        }
+    if(tileCanvas.hasSelection()) {
+        document.getElementById("selectionTools").style = "";
+    } else {
+        document.getElementById("selectionTools").style = "display: none;";
     }
+
+    if(mouseIsPressed && mouseButton != "left") {
+        canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
+        canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
+        document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
+    }
+
     globalMouse2.x = globalMouse.x;
     globalMouse2.y = globalMouse.y;
 }
@@ -337,120 +215,13 @@ function keyPressed() {
 }
 
 function mousePressed(event) {
-    if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
-        return;
-    }
-    currentX = floor(getMouseX()/layers[currentLayer].getGridSize());
-    currentY = floor(getMouseY()/layers[currentLayer].getGridSize());
-    let targetShape;
-    switch(currentTool) {
-        case 'select':
-            if(collidesWithSelection(getMouseX(), getMouseY())) {
-                movingSelection = true;
-            } else {
-                movingSelection = false;
-            }
-            break;
-        case 'erase':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.erase();
-            }
-            break;
-        case 'paint':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.recolor(currentColor);
-            }
-            break;
+    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
+        clickingOnCanvas = true;
     }
 }
-
-function mouseReleased() {
-    if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
-        return;
-    }
-    if(mouseButton != "left") {
-        return;
-    }
-    switch(currentTool) {
-        case 'draw':
-            let sX = min(currentStartX, currentEndX);
-            let sY = min(currentStartY, currentEndY);
-            let eX = max(currentStartX, currentEndX);
-            let eY = max(currentStartY, currentEndY);
-            if(currentShape == 'rect') {
-                for(let x = sX; x <= eX; x ++) {
-                    for(let y = sY; y <= eY; y ++) {
-                        shapes[currentShape].addToLayer(layers[currentLayer], x, y, x, y, currentRotation, currentColor);
-                    }
-                }
-            } else {
-                shapes[currentShape].addToLayer(layers[currentLayer], sX, sY, eX, eY, currentRotation, currentColor);
-            }
-        break;
-        case 'select':
-            if(selection.length > 0) {
-                if(movingSelection) {
-                    movingSelection = false;
-                    for(let shape of selection) {
-                        shape.move(currentEndX - currentStartX, currentEndY - currentStartY);
-                        shape.parent.sendToFront(shape);
-                    }
-                } else {
-                    selection = [];
-                }
-            } else {
-                if(currentStartX == currentEndX && currentStartY == currentEndY) {
-                    let shape = getFirstCollidingShape(getMouseX(), getMouseY());
-                    if(shape) {
-                        selection.push(shape);
-                    }
-                } else {
-                    let sX = min(currentStartX, currentEndX);
-                    let sY = min(currentStartY, currentEndY);
-                    let eX = max(currentStartX, currentEndX);
-                    let eY = max(currentStartY, currentEndY);
-                    for(let shape of layers[currentLayer]) {
-                        if(shape.fitsWithin(sX, sY, eX, eY)) {
-                            selection.push(shape);
-                        }
-                    }
-                }
-            }
-        break;
-    }
-}
-
-function mouseDragged() {
-    if(event.target != canvas || getMouseX() < 0 || getMouseX() > width || getMouseY() < 0 || getMouseY() > height) {
-        return;
-    }
-    let targetShape;
-    switch(currentTool) {
-        case 'draw':
-            if (getMouseX() > layers[currentLayer].toSC(currentStartX) && getMouseY() > layers[currentLayer].toSC(currentStartY)) {
-                setRotation(2);
-            } else if (getMouseX() < layers[currentLayer].toSC(currentStartX) && getMouseY() > layers[currentLayer].toSC(currentStartY)) {
-                setRotation(3);
-            } else if (getMouseX() < layers[currentLayer].toSC(currentStartX) && getMouseY() < layers[currentLayer].toSC(currentStartY)) {
-                setRotation(0);
-            } else if (getMouseX() > layers[currentLayer].toSC(currentStartX) && getMouseY() < layers[currentLayer].toSC(currentStartY)) {
-                setRotation(1);
-            }
-            break;
-        case 'erase':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.erase();
-            }
-            break;
-        case 'paint':
-            targetShape = getFirstCollidingShape(getMouseX(), getMouseY());
-            if(targetShape) {
-                targetShape.color = currentColor;
-            }
-            break;
+function mouseReleased(event) {
+    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
+        clickingOnCanvas = false;
     }
 }
 

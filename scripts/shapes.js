@@ -88,6 +88,9 @@ class TileLike {
             return this.parent.getLayer();
         }
     }
+    setColor(color) {
+        throw new Error("Not implemented");
+    }
     clone(offsetX, offsetY) {
         throw new Error("Not implemented");
     }
@@ -97,13 +100,10 @@ class TileLike {
     recolor(color) {
         throw new Error("Not implemented");
     }
-    draw(canvas) {
+    draw() {
         throw new Error("Not implemented");
     }
-    drawWithOffset(canvas, offsetX, offsetY) {
-        throw new Error("Not implemented");
-    }
-    drawOutline(canvas) {
+    drawOutline(offsetX, offsetY) {
         throw new Error("Not implemented");
     }
     collidesWith(mouseX, mouseY) {
@@ -165,6 +165,11 @@ class Group extends TileLike {
         this.erase();
         return removedChildren;
     }
+    setColor(color) {
+        for(let child of this.children) {
+            child.setColor(color);
+        }
+    }
     clone(offsetX, offsetY) {
         let newGroup = new Group(this.parent);
         for(let child of this.children) {
@@ -182,14 +187,9 @@ class Group extends TileLike {
             child.recolor(color);
         }
     }
-    draw(canvas) {
+    draw() {
         for(let child of this.children) {
-            child.draw(canvas);
-        }
-    }
-    drawWithOffset(canvas, offsetX, offsetY) {
-        for(let child of this.children) {
-            child.drawWithOffset(canvas, offsetX, offsetY);
+            child.draw();
         }
     }
     getBounds() {
@@ -229,10 +229,10 @@ class Group extends TileLike {
         }
         return [minX, minY, maxX, maxY];
     }
-    drawOutline(canvas) {
+    drawOutline(offsetX, offsetY) {
         let [minX, minY, maxX, maxY] = this.getBounds();
-        canvas.noFill();
-        canvas.rect(this.getLayer().toSCF(minX), this.getLayer().toSCF(minY), this.getLayer().toSCC(maxX), this.getLayer().toSCC(maxY));
+        noFill();
+        rect(this.getLayer().toSCF(minX+offsetX), this.getLayer().toSCF(minY+offsetY), this.getLayer().toSCC(maxX+offsetX), this.getLayer().toSCC(maxY+offsetY));
     }
     collidesWith(mouseX, mouseY) {
         for(let child of this.children) {
@@ -263,13 +263,13 @@ class Tile extends TileLike {
         this.rotation = rotation;
         this.color = color;
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
+    static drawRaw(sX, sY, eX, eY, r, layer) {
         throw new Error("Not implemented");
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         throw new Error("Not implemented");
     }
-    static addToLayer(layer, startX, startY, endX, endY, rotation, color) {
+    static place(startX, startY, endX, endY, rotation, color, layer) {
         for(let shape of layer) {
             if(shape instanceof this && shape.sameAs({startX : startX, startY : startY, endX : endX, endY : endY, rotation : rotation})) {
                 shape.color = color;
@@ -288,23 +288,19 @@ class Tile extends TileLike {
         this.endX += offsetX;
         this.endY += offsetY;
     }
-    recolor(color) {
+    setColor(color) {
         this.color = color;
     }
     sameAs(otherTile) {
         return this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation;
     }
-    draw(canvas) {
-        canvas.fill(this.color);
-        this.constructor.drawRaw(canvas, this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
+    draw() {
+        fill(this.color);
+        this.constructor.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
     }
-    drawWithOffset(canvas, offsetX, offsetY) {
-        canvas.fill(this.color);
-        this.constructor.drawRaw(canvas, this.startX + offsetX, this.startY + offsetY, this.endX + offsetX, this.endY + offsetY, this.rotation, this.getLayer());
-    }
-    drawOutline(canvas) {
-        canvas.noFill();
-        this.constructor.drawRaw(canvas, this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
+    drawOutline(offsetX, offsetY) {
+        noFill();
+        this.constructor.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
     }
     collidesWith(mouseX, mouseY) {
         return this.constructor.checkCollision(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer(), mouseX, mouseY);
@@ -318,8 +314,8 @@ class RectTile extends Tile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
-        canvas.rect(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
+    static drawRaw(sX, sY, eX, eY, r, layer) {
+        rect(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         return mouseX > layer.toSCF(sX) && mouseX < layer.toSCC(eX) && mouseY > layer.toSCF(sY) && mouseY < layer.toSCC(eY);
@@ -330,8 +326,8 @@ class EllipseTile extends Tile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
-        canvas.ellipse(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
+    static drawRaw(sX, sY, eX, eY, r, layer) {
+        ellipse(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         let centerX = layer.toSC(sX + (eX - sX) / 2);
@@ -346,46 +342,46 @@ class QuadrantTile extends Tile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
+    static drawRaw(sX, sY, eX, eY, r, layer) {
         let w = eX - sX + 1;
         let h = eY - sY + 1;
         switch(int(r)) {
             case 0:
-                canvas.arc(layer.toSCF(sX - w), layer.toSCF(sY - h), layer.toSCC(eX), layer.toSCC(eY), 0, HALF_PI);
+                arc(layer.toSCF(sX - w), layer.toSCF(sY - h), layer.toSCC(eX), layer.toSCC(eY), 0, HALF_PI);
                 break;
             case 1:
-                canvas.arc(layer.toSCF(sX), layer.toSCF(sY - h), layer.toSCC(eX + w), layer.toSCC(eY), HALF_PI, PI);
+                arc(layer.toSCF(sX), layer.toSCF(sY - h), layer.toSCC(eX + w), layer.toSCC(eY), HALF_PI, PI);
                 break;
             case 2:
-                canvas.arc(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX + w), layer.toSCC(eY + h), PI, PI + HALF_PI);
+                arc(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX + w), layer.toSCC(eY + h), PI, PI + HALF_PI);
                 break;
             case 3:
-                canvas.arc(layer.toSCF(sX - w), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY + h), PI + HALF_PI, TWO_PI);
+                arc(layer.toSCF(sX - w), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY + h), PI + HALF_PI, TWO_PI);
                 break;
         }
     }
-    drawOutline(canvas) {
-        super.drawOutline(canvas);
+    drawOutline() {
+        QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
         let sX = this.getLayer().toSCF(this.startX);
         let sY = this.getLayer().toSCF(this.startY);
         let eX = this.getLayer().toSCC(this.endX);
         let eY = this.getLayer().toSCC(this.endY);
         switch(int(this.rotation)) {
             case 0:
-                canvas.line(sX, sY, eX, sY);
-                canvas.line(sX, sY, sX, eY);
+                line(sX, sY, eX, sY);
+                line(sX, sY, sX, eY);
                 break;
             case 1:
-                canvas.line(sX, sY, eX, sY);
-                canvas.line(eX, sY, eX, eY);
+                line(sX, sY, eX, sY);
+                line(eX, sY, eX, eY);
                 break;
             case 2:
-                canvas.line(eX, sY, eX, eY);
-                canvas.line(sX, eY, eX, eY);
+                line(eX, sY, eX, eY);
+                line(sX, eY, eX, eY);
                 break;
             case 3:
-                canvas.line(sX, sY, sX, eY);
-                canvas.line(sX, eY, eX, eY);
+                line(sX, sY, sX, eY);
+                line(sX, eY, eX, eY);
                 break;
         }
         
@@ -415,7 +411,7 @@ class QuadrantTile extends Tile {
                 eEY += h;
                 break;
         }
-        return Rect.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && Ellipse.checkCollision(eSX, eSY, eEX, eEY, r, layer, mouseX, mouseY);
+        return RectTile.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && EllipseTile.checkCollision(eSX, eSY, eEX, eEY, r, layer, mouseX, mouseY);
     }
 }
 
@@ -423,38 +419,38 @@ class InverseQuadrantTile extends Tile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
-        canvas.push();
+    static drawRaw(sX, sY, eX, eY, r, layer) {
+        push();
         let mask = function() {
-            Quadrant.drawRaw(canvas, sX, sY, eX, eY, (r+2)%4, layer);
+            QuadrantTile.drawRaw(sX, sY, eX, eY, (r+2)%4, layer);
         }
         clip(mask, { invert: true });
-        Rect.drawRaw(canvas, sX, sY, eX, eY, r, layer);
-        canvas.pop();
+        RectTile.drawRaw(sX, sY, eX, eY, r, layer);
+        pop();
     }
-    drawOutline(canvas) {
-        canvas.noFill();
-        Quadrant.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
+    drawOutline() {
+        noFill();
+        QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, (this.rotation+2)%4, this.getLayer());
         let sX = this.getLayer().toSCF(this.startX);
         let sY = this.getLayer().toSCF(this.startY);
         let eX = this.getLayer().toSCC(this.endX);
         let eY = this.getLayer().toSCC(this.endY);
         switch(int(this.rotation)) {
             case 0:
-                canvas.line(eX, sY, eX, eY);
-                canvas.line(sX, eY, eX, eY);
+                line(sX, sY, eX, sY);
+                line(sX, sY, sX, eY);
                 break;
             case 1:
-                canvas.line(sX, sY, sX, eY);
-                canvas.line(sX, eY, eX, eY);
+                line(sX, sY, eX, sY);
+                line(eX, sY, eX, eY);
                 break;
             case 2:
-                canvas.line(sX, sY, eX, sY);
-                canvas.line(sX, sY, sX, eY);
+                line(eX, sY, eX, eY);
+                line(sX, eY, eX, eY);
                 break;
             case 3:
-                canvas.line(sX, sY, eX, sY);
-                canvas.line(eX, sY, eX, eY);
+                line(sX, sY, sX, eY);
+                line(sX, eY, eX, eY);
                 break;
         }
         
@@ -468,23 +464,23 @@ class InverseQuadrantTile extends Tile {
         let eEY = eY;
         switch(int(r)) {
             case 0:
-                eSX -= w;
-                eSY -= h;
+                eEX += w;
+                eEY += h;
                 break;
             case 1:
-                eEX += w;
-                eSY -= h;
-                break;
-            case 2:
-                eEX += w;
-                eEY += h;
-                break;
-            case 3:
                 eSX -= w;
                 eEY += h;
                 break;
+            case 2:
+                eSX -= w;
+                eSY -= h;
+                break;
+            case 3:
+                eEX += w;
+                eSY -= h;
+                break;
         }
-        return Rect.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && !Ellipse.checkCollision(eSX, eSY, eEX, eEY, (r+2)%4, layer, mouseX, mouseY);
+        return RectTile.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && !EllipseTile.checkCollision(eSX, eSY, eEX, eEY, (r+2)%4, layer, mouseX, mouseY);
     }
 }
 
@@ -492,19 +488,19 @@ class WedgeTile extends Tile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
+    static drawRaw(sX, sY, eX, eY, r, layer) {
         switch(int(r)) {
             case 0:
-                canvas.triangle(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCF(sY), layer.toSCF(sX), layer.toSCC(eY));
+                triangle(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCF(sY), layer.toSCF(sX), layer.toSCC(eY));
                 break;
             case 1:
-                canvas.triangle(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
+                triangle(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
                 break;
             case 2:
-                canvas.triangle(layer.toSCC(eX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCC(eY));
+                triangle(layer.toSCC(eX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCC(eY));
                 break;
             case 3:
-                canvas.triangle(layer.toSCC(eX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCF(sY));
+                triangle(layer.toSCC(eX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCC(eY), layer.toSCF(sX), layer.toSCF(sY));
                 break;
         }
     }
@@ -522,10 +518,10 @@ class WedgeTile extends Tile {
     }
 }
 
-class BezierWedgeTile extends Wedge {
+class BezierWedgeTile extends WedgeTile {
     constructor(startX, startY, endX, endY, rotation, color, parent) {
         super(startX, startY, endX, endY, rotation, color, parent);
-        let c = BezierWedge.getStartControls(startX, startY, endX, endY, rotation);
+        let c = BezierWedgeTile.getStartControls(startX, startY, endX, endY, rotation);
         this.startControlX = c.x1;
         this.startControlY = c.y1;
         this.endControlX = c.x2;
@@ -546,48 +542,48 @@ class BezierWedgeTile extends Wedge {
         ]
         return {x1: corners[(r+2)%4].x, y1: corners[(r+2)%4].y, x2: corners[r%4].x, y2: corners[r%4].y};
     }
-    static drawRaw2(canvas, sX, sY, eX, eY, x1, y1, x2, y2, r, layer) {
+    static drawRaw2(sX, sY, eX, eY, x1, y1, x2, y2, r, layer) {
         let corners = [
             {x: layer.toSCF(sX), y: layer.toSCC(eY)},
             {x: layer.toSCF(sX), y: layer.toSCF(sY)},
             {x: layer.toSCC(eX), y: layer.toSCF(sY)},
             {x: layer.toSCC(eX), y: layer.toSCC(eY)},
         ]
-        canvas.beginShape();
-        canvas.vertex(corners[r].x, corners[r].y);
-        canvas.vertex(corners[(r+1)%4].x, corners[(r+1)%4].y);
-        canvas.vertex(corners[(r+2)%4].x, corners[(r+2)%4].y);
-        canvas.bezierVertex(layer.toSC(x1), layer.toSC(y1), 
+        beginShape();
+        vertex(corners[r].x, corners[r].y);
+        vertex(corners[(r+1)%4].x, corners[(r+1)%4].y);
+        vertex(corners[(r+2)%4].x, corners[(r+2)%4].y);
+        bezierVertex(layer.toSC(x1), layer.toSC(y1), 
                     layer.toSC(x2), layer.toSC(y2),
                     corners[r].x, corners[r].y);
-        canvas.endShape();
+        endShape();
     }
-    static drawRaw(canvas, sX, sY, eX, eY, r, layer) {
-        let c = BezierWedge.getStartControls(sX, sY, eX, eY, r);
-        BezierWedge.drawRaw2(canvas, sX, sY, eX, eY, c.x1, c.y1, c.x2, c.y2, r, layer);
+    static drawRaw(sX, sY, eX, eY, r, layer) {
+        let c = BezierWedgeTile.getStartControls(sX, sY, eX, eY, r);
+        BezierWedgeTile.drawRaw2(sX, sY, eX, eY, c.x1, c.y1, c.x2, c.y2, r, layer);
     }
-    draw(canvas) {
-        canvas.fill(this.color);
-        BezierWedge.drawRaw2(canvas, this.startX, this.startY, this.endX, this.endY, this.startControlX, this.startControlY, this.endControlX, this.endControlY, this.rotation, this.getLayer());
+    draw() {
+        fill(this.color);
+        BezierWedgeTile.drawRaw2(this.startX, this.startY, this.endX, this.endY, this.startControlX, this.startControlY, this.endControlX, this.endControlY, this.rotation, this.getLayer());
         //this.drawControls();
     }
-    drawOutline(canvas) {
-        super.drawOutline(canvas);
-        this.drawControls(canvas);
+    drawOutline() {
+        super.drawOutline();
+        this.drawControls();
     }
-    drawControls(canvas) {
+    drawControls() {
         let corners = [
             {x: this.getLayer().toSCF(this.startX), y: this.getLayer().toSCC(this.endY)},
             {x: this.getLayer().toSCF(this.startX), y: this.getLayer().toSCF(this.startY)},
             {x: this.getLayer().toSCC(this.endX), y: this.getLayer().toSCF(this.startY)},
             {x: this.getLayer().toSCC(this.endX), y: this.getLayer().toSCC(this.endY)},
         ]
-        canvas.stroke(255, 0, 0);
-        canvas.strokeWeight(3);
-        canvas.line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
-        canvas.line(corners[this.rotation].x, corners[this.rotation].y, this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
-        canvas.strokeWeight(10);
-        canvas.point(this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
-        canvas.point(this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
+        stroke(255, 0, 0);
+        strokeWeight(3);
+        line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
+        line(corners[this.rotation].x, corners[this.rotation].y, this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
+        strokeWeight(10);
+        point(this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
+        point(this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
     }
 }
