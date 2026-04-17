@@ -1,11 +1,30 @@
 class Selection {
     constructor(tiles) {
         this.tiles = tiles;
+        this.hasMoved = false;
         this.displayOffsetX = 0;
         this.displayOffsetY = 0;
     }
     size() {
         return this.tiles.length;
+    }
+    removeOverlapping(maker) {
+        for(let tile of this.tiles) {
+            maker.allOverlapping(tile.startX, tile.startY, tile.endX, tile.endY, (t) => {
+                if(!this.includes(t)) {
+                    t.erase();
+                }
+            })
+        }
+    }
+    removeIdentical(maker) {
+        for(let tile of this.tiles) {
+            maker.getActiveLayer().forEach((t) => {
+                if(t != tile && tile.sameAs(t)) {
+                    t.erase();
+                }
+            })
+        }
     }
     remove(tile) {
         if(this.includes(tile)) {
@@ -24,12 +43,14 @@ class Selection {
         this.displayOffsetY = 0;
     }
     applyOffset() {
+        this.hasMoved = true;
         for(let tile of this.tiles) {
             tile.move(this.displayOffsetX, this.displayOffsetY);
         }
         this.resetOffset();
     }
     drawOutlines() {
+        noFill();
         stroke(0, 0, 255);
         strokeWeight(3);
         for(let tile of this.tiles) {

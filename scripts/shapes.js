@@ -8,6 +8,9 @@ function inTriangle(x1, y1, x2, y2, x3, y3, otherX, otherY) {
     let area3 = abs((x1*(y2-otherY) + x2*(otherY-y1) + otherX*(y1-y2))/2.0);
     return areaOrig == area1 + area2 + area3;
 }
+function rectsOverlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+    return ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1;
+}
 
 class Layer {
     constructor(tileCanvas) {
@@ -35,6 +38,11 @@ class Layer {
     }
     getChild(index) {
         return this.children[index];
+    }
+    forEach(callback) {
+        for(let i = this.children.length - 1; i >= 0; i --) {
+            callback(this.children[i]);
+        }
     }
     remove(index) {
         if (index >= 0 && index < this.children.length) {
@@ -269,15 +277,6 @@ class Tile extends TileLike {
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         throw new Error("Not implemented");
     }
-    static place(startX, startY, endX, endY, rotation, color, layer) {
-        for(let shape of layer) {
-            if(shape instanceof this && shape.sameAs({startX : startX, startY : startY, endX : endX, endY : endY, rotation : rotation})) {
-                shape.color = color;
-                return;
-            }
-        }
-        layer.addChild(new this(startX, startY, endX, endY, rotation, color, layer));
-    }
     clone(offsetX, offsetY) {
         let newTile = new this.constructor(this.startX + offsetX, this.startY + offsetY, this.endX + offsetX, this.endY + offsetY, this.rotation, this.color, this.parent);
         return newTile;
@@ -292,7 +291,7 @@ class Tile extends TileLike {
         this.color = color;
     }
     sameAs(otherTile) {
-        return this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation;
+        return this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation && this.constructor == otherTile.constructor;
     }
     draw() {
         fill(this.color);
@@ -304,6 +303,9 @@ class Tile extends TileLike {
     }
     collidesWith(mouseX, mouseY) {
         return this.constructor.checkCollision(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer(), mouseX, mouseY);
+    }
+    overlapsWith(sX, sY, eX, eY) {
+        return rectsOverlap(sX, sY, eX, eY, this.startX, this.startY, this.endX, this.endY);
     }
     fitsWithin(sX, sY, eX, eY) {
         return this.startX >= sX && this.startY >= sY && this.endX <= eX && this.endY <= eY;

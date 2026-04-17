@@ -1,4 +1,4 @@
-class TileCanvas {
+class Maker {
     static TOOLS = {
         RECT: new RectTool(),
         ELLIPSE: new EllipseTool(),
@@ -8,7 +8,8 @@ class TileCanvas {
         BEZIER_WEDGE: new BezierWedgeTool(),
         ERASE: new EraseTool(),
         PAINT: new PaintTool(),
-        SELECT: new SelectTool()
+        SELECT: new SelectTool(),
+        EYEDROP: new ColorSelectTool()
     }
     constructor(width, height, resolution) {
         this.width = width;
@@ -16,7 +17,8 @@ class TileCanvas {
         this.resolution = resolution;
         this.layers = [new Layer(this)];
         this.shouldDrawGrid = true;
-        this.currentTool = TileCanvas.TOOLS.RECT;
+        this.currentTool = Maker.TOOLS.RECT;
+        this.currentTool.onEnable(this);
         this.currentColor = '#000000';
         this.currentStartMouseX = 0;
         this.currentStartMouseY = 0;
@@ -30,19 +32,14 @@ class TileCanvas {
         this.pMousePressed = false;
         this.pMouseX = 0;
         this.pMouseY = 0;
+        this.backgroundColor = '#FFFFFF';
     }
     draw() {
-        // let hoveredShape = null;
-        // if(this.currentTool.highlightHovered) {
-        //     hoveredShape = this.getFirstCollidingShape(mouseX, mouseY);
-        // }
-        // let offsetX = 0;
-        // let offsetY = 0;
-        // if(currentTool == 'select' && movingSelection) {
-        //     offsetX = currentEndX - currentStartX;
-        //     offsetY = currentEndY - currentStartY;
-        // }
-        background(255)
+        if(this.backgroundColor) {
+            background(this.backgroundColor);
+        } else {
+            clear();
+        }
         this.render(this.displayCanvas);
         if(this.shouldDrawGrid) {
             this.drawGrid();
@@ -102,6 +99,12 @@ class TileCanvas {
     getEndY() {
         return this.getActiveLayer().toLC(max(this.currentStartMouseY, this.currentEndMouseY));
     }
+    getCurrentX() {
+        return this.getActiveLayer().toLC(this.currentEndMouseX);
+    }
+    getCurrentY() {
+        return this.getActiveLayer().toLC(this.currentEndMouseY);
+    }
     getXOffset() {
         return this.getActiveLayer().toLC(this.currentEndMouseX - this.currentStartMouseX);
     }
@@ -133,7 +136,11 @@ class TileCanvas {
 
     }
     downloadCanvas(fileName) {
-        clear;
+        if(this.backgroundColor) {
+            background(this.backgroundColor);
+        } else {
+            clear();
+        }
         this.render(this.displayCanvas);
         saveCanvas(fileName);
     }
@@ -141,18 +148,6 @@ class TileCanvas {
         this.currentRotation = rotation;
     }
     setTool(tool) {
-        // if(selection.length > 0) {
-        //     switch(tool) {
-        //         case 'select':
-        //             selection = [];
-        //             break;
-        //         case 'paint':
-        //             for(let shape of selection) {
-        //                 shape.recolor(currentColor);
-        //             }
-        //             break;
-        //     }
-        // }
         this.currentTool.onDisable(this);
         tool.onEnable(this);
         this.currentTool = tool;
@@ -191,12 +186,12 @@ class TileCanvas {
         this.shouldDrawGrid = !this.shouldDrawGrid;
     }
 
-    firstCollidingInSelection(x, y, callback) {
+    firstColliding(x, y, callback) {
         for (let i = this.layers.length - 1; i >= 0; i--) {
             let layer = this.layers[i];
             for(let j = layer.size() - 1; j >= 0; j--) {
                 let shape = layer.getChild(j);
-                if(shape.collidesWith(x, y) && (!this.hasSelection() || this.selection.includes(shape))) {
+                if(shape.collidesWith(x, y)) {
                     callback(shape);
                     return;
                 }
@@ -204,27 +199,48 @@ class TileCanvas {
         }
     }
 
-    allWithinSelection(sX, sY, eX, eY, callback) {
+    allWithin(sX, sY, eX, eY, callback) {
         for(let i = this.getActiveLayer().size()-1; i >= 0; i --) {
             let shape = this.getActiveLayer().getChild(i);
-            if(shape.fitsWithin(sX, sY, eX, eY) && (!this.hasSelection() || this.selection.includes(shape))) {
+            if(shape.fitsWithin(sX, sY, eX, eY)) {
                 callback(shape);
             }
         }
     }
-    
-    getFirstCollidingShape(x, y) {
-        for (let i = this.layers.length - 1; i >= 0; i--) {
-            let layer = this.layers[i];
-            for(let j = layer.size() - 1; j >= 0; j--) {
-                let shape = layer.getChild(j);
-                if(shape.collidesWith(x, y)) {
-                    return shape;
-                }
+
+    allOverlapping(sX, sY, eX, eY, callback) {
+        for(let i = this.getActiveLayer().size()-1; i >= 0; i --) {
+            let shape = this.getActiveLayer().getChild(i);
+            if(shape.overlapsWith(sX, sY, eX, eY)) {
+                callback(shape);
             }
         }
-        return null;
     }
+
+    firstCollidingInSelection(x, y, callback) {
+        this.firstColliding(x, y, (tile) => {
+            if(!this.hasSelection() || this.selection.includes(tile)) {//Only include selected tiles, or any tile if none are selected
+                callback(tile);
+            }
+        });
+    }
+
+    allWithinSelection(sX, sY, eX, eY, callback) {
+        this.allWithin(sX, sY, eX, eY, (tile) => {
+            if(!this.hasSelection() || this.selection.includes(tile)) {//Only include selected tiles, or any tile if none are selected
+                callback(tile);
+            }
+        });
+    }
+
+    allOverlappingSelection(sX, sY, eX, eY, callback) {
+        this.allOverlapping(sX, sY, eX, eY, (tile) => {
+            if(!this.hasSelection() || this.selection.includes(tile)) {//Only include selected tiles, or any tile if none are selected
+                callback(tile);
+            }
+        });
+    }
+    
     eraseTile(tile) {
         tile.erase();
         if(this.hasSelection()) {

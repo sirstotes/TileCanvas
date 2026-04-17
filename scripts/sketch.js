@@ -1,16 +1,65 @@
 
-let tileCanvas;
+let maker;
 
 let defaultPalette = ["#000000", "#1D2B53", "#7E2553", "#008751", "#AB5236", "#5F574F", "#C2C3C7", "#FFF1E8", "#FF004D", "#FFA300", "#FFEC27", "#00E436", "#29ADFF", "#83769C", "#FF77A8", "#FFCCAA"];
+
+let palette = [];
+
+function addColor(color) {
+    for(let c of palette) {
+        if(c.color == color) {
+            return;
+        }
+    }
+
+    let newButton = document.createElement("button");
+    newButton.onclick = () => {setColor(color)};
+    newButton.style = "background-color:"+color+";";
+    document.getElementById("colorPalette").appendChild(newButton);
+
+    let newController = document.createElement("button");
+    newController.onclick = () => {removeColor(color)};
+    newController.innerHTML = "<img src='assets/cross-circle.png'>";
+    newController.style = "background-color:"+color+";flex-grow:1;";
+    document.getElementById("paletteButtons").appendChild(newController);
+    
+    palette.push({
+        color: color,
+        selectButton: newButton,
+        removeButton: newController
+    });
+}
+
+function removeColor(color) {
+    for(let i = 0; i < palette.length; i ++) {
+        if (palette[i].color == color) {
+            palette[i].selectButton.remove();
+            palette[i].removeButton.remove();
+            palette.splice(i, 1);
+        }
+    }
+}
 
 function loadColors(colors) {
     document.getElementById("colorPalette").childNodes = [];
     for(let color of colors) {
-        let newButton = document.createElement("button");
-        newButton.onclick = () => {setColor(color)};
-        newButton.style = "background-color:"+color+";";
-        newButton.internalColor = color;
-        document.getElementById("colorPalette").appendChild(newButton);
+        addColor(color);
+    }
+}
+
+function setColor(color) {
+    maker.setColor(color);
+    let current = document.getElementById("selectedColor");
+    if(current) {
+        current.id = "";
+        current.classList = [];
+    }
+    for(let c of palette) {
+        if(c.color == color) {
+            c.selectButton.id = "selectedColor";
+            c.selectButton.classList = ["selected"];
+            break;
+        }
     }
 }
 
@@ -32,92 +81,81 @@ function toggleMenu(id, button) {
     }
 }
 
-function selectButton(button) {
-    let currentButtons = document.getElementsByClassName("selectedButton");
-    for(let b of currentButtons) {
-        b.classList = [];
-    }
-    button.classList.add("selectedButton");
-}
-
 function undo() {
-    tileCanvas.undo();
+    maker.undo();
 }
 
 function redo() {
-    tileCanvas.redo();
+    maker.redo();
 }
 
 function toggleGrid(button) {
-    tileCanvas.toggleGrid();
+    maker.toggleGrid();
     button.classList = shouldDrawGrid ? ["highlighted"] : []
 }
 
 function downloadCanvas() {
-    tileCanvas.downloadCanvas(document.getElementById("fileName").value);
-}
-
-function setColor(color) {
-    tileCanvas.setColor(color);
-    let current = document.getElementById("selectedColor");
-    if(current) {
-        current.id = "";
-        current.classList = [];
-    }
-    for(let node of document.getElementById("colorPalette").childNodes) {
-        if(node.internalColor == color) {
-            node.id = "selectedColor";
-            node.classList = ["selected"];
-            break;
-        }
-    }
+    maker.downloadCanvas(document.getElementById("fileName").value);
 }
 
 function setCanvasSize(w, h) {
-    resizeCanvas(w*tileCanvas.resolution, h*tileCanvas.resolution);
+    maker.width = w;
+    maker.height = h;
+    resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
 }
 
-function setTool(tool) {
-    tileCanvas.setTool(TileCanvas.TOOLS[tool]);
-    for(let node of document.getElementsByClassName("toolButton")) {
-        if(node.internalTool == tool) {
-            node.id = "selectedColor";
-            node.classList = ["selected"];
-            break;
-        }
+function setResolution(r) {
+    maker.resolution = r;
+    resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
+}
+
+function setBackgroundColor(c) {
+    maker.backgroundColor = c;
+}
+
+function setToolOption(optionName, value) {
+    Tool[optionName] = Tool[optionName+"_OPTIONS"][value];
+}
+
+function setTool(toolName) {
+    maker.setTool(Maker.TOOLS[toolName]);
+    let currentButtons = document.getElementsByClassName("selectedButton");
+    for(let b of currentButtons) {
+        b.classList = [];
     }
+    document.getElementById(toolName+"_Button").classList.add("selectedButton");
 }
 
 function cancelSelection() {
-    tileCanvas.cancelSelection();
+    maker.cancelSelection();
 }
 
 function groupSelection() {
-    tileCanvas.groupSelection();
+    maker.groupSelection();
 }
 
 function ungroupSelection() {
-    tileCanvas.ungroupSelection();
+    maker.ungroupSelection();
 }
 
 function duplicateSelection() {
-    tileCanvas.duplicateSelection();
+    maker.duplicateSelection();
 }
 
 function backSelection() {
-    tileCanvas.backSelection();
+    maker.backSelection();
 }
 
 function frontSelection() {
-    tileCanvas.frontSelection();
+    maker.frontSelection();
 }
 
 function rotateSelection(direction) {
-    tileCanvas.eraseSelection();
+    maker.eraseSelection();
 }
 
 function eraseSelection() {
-    tileCanvas.eraseSelection();
+    maker.eraseSelection();
 }
 
 function insideCanvas(mouseX, mouseY) {
@@ -125,20 +163,25 @@ function insideCanvas(mouseX, mouseY) {
 }
 
 function clearCanvas() {
-    tileCanvas.clear();
+    maker.clear();
 }
 
 let canvas;
-let initialSize = 32;
-let initialResolution = 32;
 function setup() {
+    let initialSize = document.getElementById("canvasW").value;
+    let initialResolution = document.getElementById("tileResolution").value;
     let c = createCanvas(initialSize*initialResolution, initialSize*initialResolution);
-    tileCanvas = new TileCanvas(initialSize, initialSize, initialResolution);
+    maker = new Maker(initialSize, initialSize, initialResolution);
     c.parent('canvasContainer');
     canvas = document.getElementById("canvasContainer").firstChild;
     for (let element of document.getElementsByClassName("p5Canvas")) {
         element.addEventListener("contextmenu", (e) => e.preventDefault());
     }
+
+    setTool("RECT");
+    setToolOption("REPLACEMENT_MODE", document.getElementById("replacementModeSelect").value);
+    setToolOption("DRAG_MODE", document.getElementById("placementModeSelect").value);
+
     rectMode(CORNERS);
     ellipseMode(CORNERS);
     loadColors(defaultPalette);
@@ -154,10 +197,10 @@ let clickingOnCanvas = false;
 function draw() {
     clear();
     
-    tileCanvas.draw();
-    tileCanvas.update(getMouseX(), getMouseY(), clickingOnCanvas);
+    maker.draw();
+    maker.update(getMouseX(), getMouseY(), clickingOnCanvas);
 
-    if(tileCanvas.hasSelection()) {
+    if(maker.hasSelection()) {
         document.getElementById("selectionTools").style = "";
     } else {
         document.getElementById("selectionTools").style = "display: none;";
@@ -171,42 +214,40 @@ function draw() {
 
     globalMouse2.x = globalMouse.x;
     globalMouse2.y = globalMouse.y;
+
+    for(let button of document.getElementsByClassName("shapeButton")) {
+        button.childNodes[0].style = "rotate:"+maker.getRotation()*90+"deg;"
+    }
 }
 
 function keyPressed() {
     if(key === 'r') {
         selectButton(document.getElementById("rectButton"));
-        setShape("rect");
-        setTool("draw");
+        setTool("RECT");
     } else if(key === 'c') {
         selectButton(document.getElementById("ellipseButton"));
-        setShape("ellipse");
-        setTool("draw");
+        setTool("ELLIPSE");
     } else if(key === 'q') {
         selectButton(document.getElementById("quadrantButton"));
-        setShape("quadrant");
-        setTool("draw");
+        setTool("QUADRANT");
     } else if(key === 'i') {
         selectButton(document.getElementById("inverseQuadrantButton"));
-        setShape("inverseQuadrant");
-        setTool("draw");
+        setTool("INVERSE_QUADRANT");
     } else if(key === 'w') {
         selectButton(document.getElementById("wedgeButton"));
-        setShape("wedge");
-        setTool("draw");
+        setTool("WEDGE");
     } else if(key === 'b') {
         selectButton(document.getElementById("bezierWedgeButton"));
-        setShape("bezierWedge");
-        setTool("draw");
+        setTool("BEZIER_WEDGE");
     } else if(key === 'e') {
         selectButton(document.getElementById("eraseButton"));
-        setTool("erase");
+        setTool("ERASE");
     } else if(key === 'p') {
         selectButton(document.getElementById("paintButton"));
-        setTool("paint");
+        setTool("PAINT");
     } else if(key === 's') {
         selectButton(document.getElementById("selectButton"));
-        setTool("select");
+        setTool("SELECT");
     } else if(key === 'g') {
         toggleGrid(document.getElementById("gridButton"));
     } else if(key === 'l') {

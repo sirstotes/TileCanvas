@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
     <script src="scripts/shapes.js"></script>
@@ -13,84 +14,118 @@
     <main>
       <div id="canvasContainer"></div>
     </main>
-    <div id="topBar">
-      <div class="toolbar">
-        <div class="toolbarRow">
-          <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
-          <button disabled onclick="undo()"><img src="assets/undo.png"></button>
-          <button disabled onclick="redo()"><img src="assets/redo.png"></button>
-          <button id="gridButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
-          <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
+    <div id="UI">
+      <div id="topBar">
+        <div class="toolbar">
+          <div class="toolbarRow">
+            <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
+            <button disabled onclick="undo()"><img src="assets/undo.png"></button>
+            <button disabled onclick="redo()"><img src="assets/redo.png"></button>
+            <button id="gridButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+            <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
+          </div>
         </div>
       </div>
-      <div class="sideMenuContainer">
-        <div id="menu" class="sideMenu" style="display: none;">
-          <h3>Settings</h3>
-          <span>Canvas Size: <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32"> by <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32"> <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button></span>
-          <button onclick="clearCanvas()">Clear Canvas</button>
-          <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+      <div id="centerArea">
+        <div>
+          <div id="menu" class="sideMenu" style="display: none;">
+            <h3>Settings</h3>
+            <span>
+              Canvas Size: 
+              <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32">
+              by
+              <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32">
+              <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button>
+            </span>
+            <span>
+              Tile Resolution:
+              <input class="inlineInput" id="tileResolution" type="number" min="8" max="100" value="32">
+              <button class="inlineInput" onclick="setResolution(int(document.getElementById('tileResolution').value))">Apply</button>
+            </span>
+            <span>
+              Background Color:
+              <input class="inlineInput" id="canvasBG" type="text" value="#FFFFFF">
+              <button class="inlineInput" onclick="setBackgroundColor(document.getElementById('canvasBG').value)">Apply</button>
+              <input id="canvasBGPicker" type="color" onchange="setBackgroundColor(this.value)">
+            </span>
+            <button onclick="clearCanvas()">Clear Canvas</button>
+            <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+          </div>
+          <div id="toolSettings" class="sideMenu" style="display: none;">
+            <h3>Tool Settings</h3>
+            <span>
+              <span style="width:40%;">Replacement Mode:</span>
+              <select id="replacementModeSelect" onchange="setToolOption('REPLACEMENT_MODE', this.value)">
+                <option value="IDENTICAL">Identical</option>
+                <option value="NONE">None</option>
+                <option value="ALL">All</option>
+              </select>
+            </span>
+            <span>
+              <span style="width:40%;">Drag Mode:</span>
+              <select id="placementModeSelect" onchange="setToolOption('DRAG_MODE', this.value)">
+                <option value="AREA">Area</option>
+                <option value="DRAW">Draw</option>
+              </select>
+            </span>
+            <span>
+              <span style="width:40%;">Selection Mode:</span>
+              <select id="selectionModeSelect" onchange="setToolOption('SELECTION_MODE', this.value)">
+                <option value="CONTAIN">Contain</option>
+                <option value="OVERLAP">Overlap</option>
+              </select>
+            </span>
+          </div>
+          <div id="paletteSettings" class="sideMenu" style="display: none;">
+            <div id="paletteButtons"></div>
+            <span>
+              <input class="inlineInput" id="newColorText" type="text" value="#ffffff">
+              <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/add.png"></button>
+              <input type="color" id="newColorPicker" value="#ff0000" onchange="addColor(this.value)">
+            </span>
+          </div>
         </div>
-        <div id="layers" class="sideMenu" style="display: none;float:right;">
-          Not done
+        <div>
+          <div id="layers" class="sideMenu" style="display: none;float:right;">
+            Not done
+          </div>
         </div>
       </div>
-    </div>
-    <div id="bottomBar">
-      <div class="toolbar">
-        <div class="toolbarRow">
-          <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
-          <button id="rectButton" class="selected selectedButton" onclick="selectButton(this);setTool('RECT')"><img src="assets/square.png"></button>
-          <button id="ellipseButton" onclick="selectButton(this);setTool('ELLIPSE')"><img src="assets/circle.png"></button>
-          <button id="quadrantButton" onclick="selectButton(this);setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
-          <button id="inverseQuadrantButton" onclick="selectButton(this);setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
-          <button id="wedgeButton" onclick="selectButton(this);setTool('WEDGE')"><img src="assets/wedge.png"></button>
-          <button id="bezierWedgeButton" onclick="selectButton(this);setTool('BEZIER_WEDGE')">bw</button>
-          <button id="eraseButton" onclick="selectButton(this);setTool('ERASE')"><img src="assets/eraser.png"></button>
-          <button id="paintButton" onclick="selectButton(this);setTool('PAINT')"><img src="assets/paint-brush.png"></button>
-          <button id="selectButton" onclick="selectButton(this);setTool('SELECT')"><img src="assets/square-dashed.png"></button>
+      <div id="bottomBar">
+        <div class="toolbar">
+          <div class="toolbarRow">
+            <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
+            <button class="shapeButton" id="RECT_Button" onclick="setTool('RECT')"><img src="assets/square.png"></button>
+            <button class="shapeButton" id="ELLIPSE_Button" onclick="setTool('ELLIPSE')"><img src="assets/circle.png"></button>
+            <button class="shapeButton" id="QUADRANT_Button" onclick="setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
+            <button class="shapeButton" id="INVERSE_QUADRANT_Button" onclick="setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
+            <button class="shapeButton" id="WEDGE_Button" onclick="setTool('WEDGE')"><img src="assets/wedge.png"></button>
+            <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')">bw</button>
+            <button id="ERASE_Button" onclick="setTool('ERASE')"><img src="assets/eraser.png"></button>
+            <button id="PAINT_Button" onclick="setTool('PAINT')"><img src="assets/paint-brush.png"></button>
+            <button id="SELECT_Button" onclick="setTool('SELECT')"><img src="assets/square-dashed.png"></button>
+          </div>
+          <div class="toolbarRow">
+            <button id="paletteButton" onclick="toggleMenu('paletteSettings', this)"><img src="assets/palette.png"></button>
+            <button id="EYEDROP_Button" onclick="setTool('EYEDROP')"><img src="assets/eye-dropper.png"></button>
+            <span id="colorPalette" style="flex-grow: 4;"></span>
+            <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
+          </div>
         </div>
-        <div class="toolbarRow">
-          <span id="colorPalette"></span>
-          <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
-        </div>
-      </div>
-      <div class="toolbar extraBar" style="display:none;" id="selectionTools">
-        <div class="toolbarRow">
-          <button onclick="cancelSelection()"><img src="assets/cross.png"></button>
-          <button onclick="groupSelection()"><img src="assets/link-alt.png"></button>
-          <button onclick="ungroupSelection()"><img src="assets/link-slash-alt.png"></button>
-          <button onclick="duplicateSelection()"><img src="assets/copy.png"></button>
-          <button disabled onclick="rotateSelection(1)"><img src="assets/rotate.png"></button>
-          <button disabled onclick="rotateSelection(-1)"><img src="assets/rotate-reverse.png"></button>
-          <button disabled><img src="assets/reflect-horizontal.png"></button>
-          <button disabled><img src="assets/reflect-vertical.png"></button>
-          <button onclick="backSelection()"><img src="assets/arrow-to-bottom.png"></button>
-          <button onclick="frontSelection()"><img src="assets/arrow-to-top.png"></button>
-          <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
-        </div>
-      </div>
-      <div class="sideMenuContainer">
-        <div id="toolSettings" class="sideMenu" style="display: none;">
-          <h3>Tool Settings (not implemented)</h3>
-          <span>
-            <span style="width:40%;">Replacement Mode:</span>
-            <select>
-              <option value="identical">Identical</option>
-              <option value="none">None</option>
-              <option value="all">All</option>
-            </select>
-          </span>
-          <span>
-            <span style="width:40%;">Drag Mode:</span>
-            <select>
-              <option value="scale">Scale</option>
-              <option value="draw">Draw</option>
-            </select>
-          </span>
-          <span>
-            <span style="flex-grow:1;">Rotate While Dragging:</span>
-            <input style="flex-grow:unset;" type="checkbox" checked="checked">
-          </span>
+        <div class="toolbar extraBar" style="display:none;" id="selectionTools">
+          <div class="toolbarRow">
+            <button onclick="cancelSelection()"><img src="assets/cross.png"></button>
+            <button onclick="groupSelection()"><img src="assets/link-alt.png"></button>
+            <button onclick="ungroupSelection()"><img src="assets/link-slash-alt.png"></button>
+            <button onclick="duplicateSelection()"><img src="assets/copy.png"></button>
+            <button disabled onclick="rotateSelection(1)"><img src="assets/rotate.png"></button>
+            <button disabled onclick="rotateSelection(-1)"><img src="assets/rotate-reverse.png"></button>
+            <button disabled><img src="assets/reflect-horizontal.png"></button>
+            <button disabled><img src="assets/reflect-vertical.png"></button>
+            <button onclick="backSelection()"><img src="assets/arrow-to-bottom.png"></button>
+            <button onclick="frontSelection()"><img src="assets/arrow-to-top.png"></button>
+            <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
+          </div>
         </div>
       </div>
     </div>

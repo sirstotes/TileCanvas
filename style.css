@@ -6,6 +6,10 @@
     --highlight-2: #a5c882;
     --highlight-3: #f7dd72;
 }
+html, body {
+    overscroll-behavior-y: contain;
+    overflow: hidden;
+}
 body {
     background-color: var(--black);
     color: white;
@@ -72,10 +76,10 @@ main {
     flex-direction: column;
     padding: 10px;
     gap: 10px;
-    /*overflow-x: scroll;*/
-    overflow: hidden;
+    overflow-x: scroll;
     align-items: stretch;
     align-self: stretch;
+    pointer-events: auto;
 }
 .toolbarRow {
     margin: 0;
@@ -98,16 +102,41 @@ main {
 .extraBar {
     align-self:center;
 }
-.sideMenuContainer {
-    align-self:stretch;
-    background:none;
+#UI {
+    position:absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: none;
+    pointer-events: none;
+}
+#centerArea {
+    flex-grow:1;
+    display: flex;
+    overflow: hidden;
+    background: none;
+    pointer-events: none;
+}
+#centerArea > div {
+    width:50%;
+    height:100%;
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+    background: none;
+    pointer-events: none;
 }
 .sideMenu {
-    float: left;
+    flex-grow:1;
     padding:10px;
     display:flex;
     flex-direction: column;
     gap: 5px;
+    pointer-events: auto;
+    overflow-y: scroll;
 }
 .sideMenu > span {
     display: flex;
@@ -119,28 +148,6 @@ main {
     flex-grow: 1;
     background-color:var(--white);
 }
-#topBar {
-    background: none;
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    right:5px;
-    display:flex;
-    gap: 10px;
-    align-items: center;
-    flex-direction: column;
-}
-#bottomBar {
-    background: none;
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
-    right:5px;
-    display:flex;
-    gap: 10px;
-    align-items: center;
-    flex-direction: column-reverse;
-}
 .inlineInput {
     display: inline-block;
     padding-top: 0;
@@ -149,4 +156,14 @@ main {
 }
 #canvasContainer {
     padding: 10px;
+}
+#paletteSettings {
+    justify-content: flex-end;
+}
+#paletteButtons {
+    display:flex;
+    flex-direction: column;
+    max-height:80vh;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
