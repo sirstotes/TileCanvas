@@ -64,7 +64,7 @@ class ShapeTool extends Tool {
     place(sX, sY, eX, eY, r, c, layer) {
         if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
             for(let tile of layer) {
-                if(tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
+                if(tile instanceof Tile && tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
                     tile.setColor(c);
                     return;
                 }

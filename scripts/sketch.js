@@ -5,46 +5,137 @@ let defaultPalette = ["#000000", "#1D2B53", "#7E2553", "#008751", "#AB5236", "#5
 
 let palette = [];
 
+function addColorButtons(color) {
+    let selectButton = document.createElement("button");
+    selectButton.onclick = () => {setColor(color)};
+    selectButton.style = "background-color:"+color+";";
+    document.getElementById("colorPalette").appendChild(selectButton);
+
+    let parent = document.createElement("span");
+    parent.style.display = "flex";
+    let upButton = document.createElement("button");
+    upButton.innerHTML = "<img src='assets/angle-small-up.png'>";
+    upButton.onclick = () => {moveColorUp(color)};
+    upButton.style = "background-color:"+color+";";
+    let downButton = document.createElement("button");
+    downButton.innerHTML = "<img src='assets/angle-small-down.png'>";
+    downButton.onclick = () => {moveColorDown(color)};
+    downButton.style = "background-color:"+color+";";
+    let copyButton = document.createElement("button");
+    copyButton.innerText = color;
+    copyButton.onclick = () => {
+        navigator.clipboard.writeText(color).then(() => {
+            copyButton.innerText = "Copied!";
+            setTimeout(() => {copyButton.innerText = color;}, 1000);
+        }).catch(err => {
+            console.error("Failed to copy text: ", err);
+        });
+    };
+    copyButton.style = "background-color:"+color+";flex-grow:1;";
+    let removeButton = document.createElement("button");
+    removeButton.onclick = () => {removeColor(color)};
+    removeButton.innerHTML = "<img src='assets/cross-circle.png'>";
+    removeButton.style = "background-color:"+color+";";
+
+    parent.appendChild(upButton);
+    parent.appendChild(downButton);
+    parent.appendChild(copyButton);
+    parent.appendChild(removeButton);
+    document.getElementById("paletteButtons").appendChild(parent);
+
+    return {
+        selectButton: selectButton,
+        control: parent,
+        upButton: upButton,
+        downButton: downButton
+    }
+}
+
 function addColor(color) {
     for(let c of palette) {
-        if(c.color == color) {
+        if(c == color) {
             return;
         }
     }
 
-    let newButton = document.createElement("button");
-    newButton.onclick = () => {setColor(color)};
-    newButton.style = "background-color:"+color+";";
-    document.getElementById("colorPalette").appendChild(newButton);
+    palette.push(color);
+    refreshDisplays();
+}
 
-    let newController = document.createElement("button");
-    newController.onclick = () => {removeColor(color)};
-    newController.innerHTML = "<img src='assets/cross-circle.png'>";
-    newController.style = "background-color:"+color+";flex-grow:1;";
-    document.getElementById("paletteButtons").appendChild(newController);
-    
-    palette.push({
-        color: color,
-        selectButton: newButton,
-        removeButton: newController
-    });
+function refreshDisplays() {
+    document.getElementById("colorPalette").innerHTML = "";
+    document.getElementById("paletteButtons").innerHTML = "";
+    for(let color of palette) {
+        addColorButtons(color);
+    }
 }
 
 function removeColor(color) {
     for(let i = 0; i < palette.length; i ++) {
-        if (palette[i].color == color) {
-            palette[i].selectButton.remove();
-            palette[i].removeButton.remove();
+        if (palette[i] == color) {
             palette.splice(i, 1);
+            break;
         }
+    }
+    refreshDisplays();
+}
+
+function moveColorDown(color) {
+    let index;
+    for(let i = 0; i < palette.length; i ++) {
+        if (palette[i] == color) {
+            index = i;
+            break;
+        }
+    }
+    if(index != undefined && index < palette.length - 1) {
+        palette.splice(index + 1, 0, palette.splice(index, 1));
+        refreshDisplays();
+    }
+}
+function moveColorUp(color) {
+    let index;
+    for(let i = 0; i < palette.length; i ++) {
+        if (palette[i] == color) {
+            index = i;
+            break;
+        }
+    }
+    if(index != undefined && index > 0) {
+        palette.splice(index - 1, 0, palette.splice(index, 1));
+        refreshDisplays();
+    }
+}
+
+function loadColorsFromString(string) {
+    let readingColor = false;
+    let color = "";
+    let hex = /[a-zA-Z0-9]/;
+    let colors = [];
+    for(let char of string) {
+        if(readingColor) {
+            if(hex.test(char)) {
+                color += char;
+            } else {
+                if(color.length == 7) {
+                    colors.push(color);
+                }
+                readingColor = false;
+            }
+        } else if(char == "#") {
+            readingColor = true;
+            color = "#";
+        }
+    }
+    if(colors.length > 0) {
+        loadColors(colors);
     }
 }
 
 function loadColors(colors) {
     document.getElementById("colorPalette").childNodes = [];
-    for(let color of colors) {
-        addColor(color);
-    }
+    palette = colors;
+    refreshDisplays();
 }
 
 function setColor(color) {
@@ -54,10 +145,10 @@ function setColor(color) {
         current.id = "";
         current.classList = [];
     }
-    for(let c of palette) {
-        if(c.color == color) {
-            c.selectButton.id = "selectedColor";
-            c.selectButton.classList = ["selected"];
+    for(let i = 0; i < palette.length; i ++) {
+        if (palette[i] == color) {
+            document.getElementById("colorPalette").childNodes[i].id = "selectedColor";
+            document.getElementById("colorPalette").childNodes[i].classList = ["selected"];
             break;
         }
     }
@@ -213,10 +304,17 @@ function setup() {
 
     continuousPress(document.getElementById("zoomInButton"), () => {zoom(0.05)});
     continuousPress(document.getElementById("zoomOutButton"), () => {zoom(-0.05)});
-    continuousPress(document.getElementById("panLeftButton"), () => {pan(-10, 0)});
-    continuousPress(document.getElementById("panRightButton"), () => {pan(10, 0)});
-    continuousPress(document.getElementById("panUpButton"), () => {pan(0, -10)});
-    continuousPress(document.getElementById("panDownButton"), () => {pan(0, 10)});
+    continuousPress(document.getElementById("panLeftButton"), () => {pan(10, 0)});
+    continuousPress(document.getElementById("panRightButton"), () => {pan(-10, 0)});
+    continuousPress(document.getElementById("panUpButton"), () => {pan(0, 10)});
+    continuousPress(document.getElementById("panDownButton"), () => {pan(0, -10)});
+
+    document.getElementById("canvasBGPicker").addEventListener('input', () => {
+        document.getElementById("canvasBG").value = document.getElementById("canvasBGPicker").value;
+    });
+    document.getElementById("newColorPicker").addEventListener('input', () => {
+        document.getElementById("newColorText").value = document.getElementById("newColorPicker").value;
+    });
 
     rectMode(CORNERS);
     ellipseMode(CORNERS);

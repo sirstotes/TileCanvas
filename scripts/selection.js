@@ -20,7 +20,7 @@ class Selection {
     removeIdentical(maker) {
         for(let tile of this.tiles) {
             maker.getActiveLayer().forEach((t) => {
-                if(t != tile && t.sameAs(tile)) {
+                if(t != tile && t instanceof Tile && t.sameAs(tile)) {
                     t.erase();
                 }
             })

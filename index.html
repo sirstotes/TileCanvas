@@ -56,9 +56,9 @@
             </span>
             <span>
               Background Color:
+              <input id="canvasBGPicker" type="color">
               <input class="inlineInput" id="canvasBG" type="text" value="#FFFFFF">
               <button class="inlineInput" onclick="setBackgroundColor(document.getElementById('canvasBG').value)">Apply</button>
-              <input id="canvasBGPicker" type="color" onchange="setBackgroundColor(this.value)">
             </span>
             <button onclick="clearCanvas()">Clear Canvas</button>
             <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
@@ -97,11 +97,12 @@
           <div style="background:none;pointer-events: none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
             <h3>Palette</h3>
+            <span><input id="paletteTextInput" class="inlineInput" type="text" value="hex codes here"><button onclick="loadColorsFromString(document.getElementById('paletteTextInput').value)">Load New</button></span>
             <div id="paletteButtons"></div>
             <span>
+              <input type="color" id="newColorPicker" value="#ff0000">
               <input class="inlineInput" id="newColorText" type="text" value="#ffffff">
               <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/add.png"></button>
-              <input type="color" id="newColorPicker" value="#ff0000" onchange="addColor(this.value)">
             </span>
           </div>
         </div>
