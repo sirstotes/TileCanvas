@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
     <script src="scripts/shapes.js"></script>
+    <script src="scripts/actions.js"></script>
     <script src="scripts/tools.js"></script>
     <script src="scripts/selection.js"></script>
     <script src="scripts/maker.js"></script>
@@ -19,8 +20,8 @@
         <div class="toolbar">
           <div class="toolbarRow">
             <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
-            <button disabled onclick="undo()"><img src="assets/undo.png"></button>
-            <button disabled onclick="redo()"><img src="assets/redo.png"></button>
+            <button onclick="undo()"><img src="assets/undo.png"></button>
+            <button onclick="redo()"><img src="assets/redo.png"></button>
             <button id="movementControlsButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
             <button id="gridButton" onclick="toggleMenu('movementControls', this)"><img src="assets/arrows.png"></button>
             <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
@@ -38,7 +39,7 @@
         </div>
       </div>
       <div id="centerArea">
-        <div>
+        <div style="pointer-events: auto;">
           <div id="menu" class="sideMenu" style="display: none;">
             <h3>Tiles</h3>
             <p>Welcome. This is a project I have worked on instead of studying and doing homework. I hope you enjoy it!</p>
@@ -90,14 +91,18 @@
             </span>
           </div>
         </div>
-        <div>
-          <div id="layers" class="sideMenu" style="display: none;float:right;">
+        <div style="pointer-events: auto;">
+          <div id="layers" class="sideMenu" style="display: none;">
             <h3>Layers (Not yet implemented)</h3>
           </div>
-          <div style="background:none;pointer-events: none;flex-grow:1;"></div>
+          <div style="background:none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
             <h3>Palette</h3>
-            <span><input id="paletteTextInput" class="inlineInput" type="text" value="hex codes here"><button onclick="loadColorsFromString(document.getElementById('paletteTextInput').value)">Load New</button></span>
+            <span>
+              <input id="paletteTextInput" class="inlineInput" type="text" value="hex codes here">
+              <button onclick="loadColorsFromString(document.getElementById('paletteTextInput').value)">Load New</button>
+              <button onclick="loadColors(defaultPalette)">Reset</button>
+            </span>
             <div id="paletteButtons"></div>
             <span>
               <input type="color" id="newColorPicker" value="#ff0000">

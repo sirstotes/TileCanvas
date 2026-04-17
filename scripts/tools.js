@@ -61,7 +61,7 @@ class ShapeTool extends Tool {
         this.shapeType = shape;
         this.maker = undefined;
     }
-    place(sX, sY, eX, eY, r, c, layer) {
+    place(maker, sX, sY, eX, eY, r, c, layer) {
         if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
             for(let tile of layer) {
                 if(tile instanceof Tile && tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
@@ -70,14 +70,13 @@ class ShapeTool extends Tool {
                 }
             }
         } else if (Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.ALL) {
-
             layer.forEach((tile) => {
                 if(tile.overlapsWith(sX, sY, eX, eY)) {
-                    this.maker.eraseTile(tile);
+                    maker.addAction(new RemoveTileAction(tile));
                 }
             });
         }
-        layer.addChild(new this.shapeType(sX, sY, eX, eY, r, c, layer));
+        maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
     }
     onEnable(maker) {
         this.maker = maker;
@@ -91,28 +90,33 @@ class ShapeTool extends Tool {
     }
     onMousePressed(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            this.place( maker.getCurrentX(), maker.getCurrentY(), maker.getCurrentX(), maker.getCurrentY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            this.place(maker, maker.getCurrentX(), maker.getCurrentY(), maker.getCurrentX(), maker.getCurrentY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            maker.submitActions();
         }
     }
     onMouseReleased(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
-            this.place(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            this.place(maker, maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            maker.submitActions();
         }
     }
     onTileChange(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW && clickingOnCanvas) {
-            this.place(maker.getCurrentX(), maker.getCurrentY(), maker.getCurrentX(), maker.getCurrentY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            this.place(maker, maker.getCurrentX(), maker.getCurrentY(), maker.getCurrentX(), maker.getCurrentY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            maker.submitActions();
         }
     }
-    onDrag(maker) {
+    update(maker, mouseX, mouseY, mousePressed) {
         if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.DRAG) {
-            if (getMouseX() > maker.currentStartMouseX && getMouseY() > maker.currentStartMouseY) {
+            let cmx = maker.getActiveLayer().toSC(maker.getActiveLayer().toLC(maker.currentStartMouseX));
+            let cmy = maker.getActiveLayer().toSC(maker.getActiveLayer().toLC(maker.currentStartMouseY));
+            if (mouseX > cmx && mouseY > cmy) {
                 maker.setRotation(2);
-            } else if (getMouseX() < maker.currentStartMouseX && getMouseY() > maker.currentStartMouseY) {
+            } else if (mouseX < cmx && mouseY > cmy) {
                 maker.setRotation(3);
-            } else if (getMouseX() < maker.currentStartMouseX && getMouseY() < maker.currentStartMouseY) {
+            } else if (mouseX < cmx && mouseY < cmy) {
                 maker.setRotation(0);
-            } else if (getMouseX() > maker.currentStartMouseX && getMouseY() < maker.currentStartMouseY) {
+            } else if (mouseX > cmx && mouseY < cmy) {
                 maker.setRotation(1);
             }
         }
@@ -123,15 +127,15 @@ class RectTool extends ShapeTool {
     constructor() {
         super("RECT", RectTile);
     }
-    place(sX, sY, eX, eY, r, c, layer) {
+    place(maker, sX, sY, eX, eY, r, c, layer) {
         if(Tool.SPLIT_TILES) {
             for(let i = sX; i < eX + 1; i ++) {
                 for(let j = sY; j < eY + 1; j ++) {
-                    super.place(i, j, i, j, r, c, layer);
+                    super.place(maker, i, j, i, j, r, c, layer);
                 }
             }
         } else {
-            super.place(sX, sY, eX, eY, r, c, layer);
+            super.place(maker, sX, sY, eX, eY, r, c, layer);
         }
     }
 }
@@ -188,30 +192,34 @@ class EraseTool extends Tool {
     onMousePressed(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                maker.eraseTile(tile);
+                maker.addAction(new RemoveTileAction(tile));
+                maker.submitActions();
             });
         }
     }
     onDrag(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-                maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                    maker.eraseTile(tile);
-                });
+            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+                maker.addAction(new RemoveTileAction(tile));
+                maker.submitActions();
+            });
         }
     }
     onMouseReleased(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
             if(maker.startEndEqual()) {
                 maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                    maker.eraseTile(tile);
+                    maker.addAction(new RemoveTileAction(tile));
+                    maker.submitActions();
                 });
             } else if(Tool.SELECTION_MODE == Tool.SELECTION_MODE_OPTIONS.CONTAIN) {
                 maker.allWithinSelection(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), (tile) => {
-                    maker.eraseTile(tile);
+                    maker.addAction(new RemoveTileAction(tile));
                 });
+                maker.submitActions();
             } else {
                 maker.allOverlappingSelection(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), (tile) => {
-                    maker.eraseTile(tile);
+                    maker.addAction(new RemoveTileAction(tile));
                 });
             }
         }
@@ -238,14 +246,16 @@ class PaintTool extends Tool {
     onMousePressed(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                tile.setColor(maker.getColor());
+                maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
+                maker.submitActions();
             });
         }
     }
     onDrag(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                tile.setColor(maker.getColor());
+                maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
+                maker.submitActions();
             });
         }
     }
@@ -253,16 +263,19 @@ class PaintTool extends Tool {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
             if(maker.startEndEqual()) {
                 maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                    tile.setColor(maker.getColor());
+                    maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
+                    maker.submitActions();
                 });
             } else if(Tool.SELECTION_MODE == Tool.SELECTION_MODE_OPTIONS.CONTAIN) {
                 maker.allWithinSelection(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), (tile) => {
-                    tile.setColor(maker.getColor());
+                    maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
                 });
+                maker.submitActions();
             } else {
                 maker.allOverlappingSelection(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), (tile) => {
-                    tile.setColor(maker.getColor());
+                    maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
                 });
+                maker.submitActions();
             }
         }
     }
@@ -273,6 +286,7 @@ class SelectTool extends Tool {
         super("SELECT");
         this.hoveringSelection = false;
         this.moving = false;
+        this.clicking = false;
     }
     draw(maker) {
         if(this.hoveringSelection) {
@@ -280,7 +294,7 @@ class SelectTool extends Tool {
         } else {
             cursor(ARROW);
         }
-        if(!this.moving) {
+        if(!this.moving && this.clicking) {
             noFill();
             stroke(255, 0, 0);
             strokeWeight(3);
@@ -291,6 +305,7 @@ class SelectTool extends Tool {
         }
     }
     update(maker, mouseX, mouseY, mousePressed) {
+        this.clicking = mousePressed;
         if(maker.hasSelection()) {
             if(maker.getSelection().collidesWith(getMouseX(), getMouseY())) {
                 this.hoveringSelection = true;
@@ -315,7 +330,7 @@ class SelectTool extends Tool {
     onMouseReleased(maker) {
         if(this.moving && maker.hasSelection()) {
             this.moving = false;
-            maker.getSelection().applyOffset();
+            maker.getSelection().applyOffset(maker);
         } else {
             if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
                 if(maker.hasSelection()) {

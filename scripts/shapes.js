@@ -12,8 +12,16 @@ function rectsOverlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
     return ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1;
 }
 
-class Layer {
-    constructor(tileCanvas) {
+class IDObject {
+    constructor(id) {
+        this.ID = id;
+        ID.set(id, this);
+    }
+}
+
+class Layer extends IDObject {
+    constructor(id, tileCanvas) {
+        super(id);
         this.children = [];
         this.gridScale = 1;
         this.canvas = tileCanvas;
@@ -63,27 +71,14 @@ class Layer {
         this.children.push(child);
         child.parent = this;
     }
-    sendToBack(child) {
-        const index = this.children.indexOf(child);
-        if (index !== -1) {
-            let c = this.children.splice(index, 1)[0];
-            this.children.unshift(c);
-        }
-    }
-    sendToFront(child) {
-        const index = this.children.indexOf(child);
-        if (index !== -1) {
-            let c = this.children.splice(index, 1)[0];
-            this.children.push(c);
-        }
-    }
     [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
     }
 }
 
-class TileLike {
-    constructor(parent) {
+class TileLike extends IDObject {
+    constructor(id, parent) {
+        super(id);
         this.parent = parent;
     }
     erase() {
@@ -96,10 +91,10 @@ class TileLike {
             return this.parent.getLayer();
         }
     }
-    setColor(color) {
-        throw new Error("Not implemented");
+    getIndexInParent() {
+        return this.parent.children.indexOf(this);
     }
-    clone(offsetX, offsetY) {
+    setColor(color) {
         throw new Error("Not implemented");
     }
     move(offsetX, offsetY) {
@@ -117,14 +112,18 @@ class TileLike {
     collidesWith(mouseX, mouseY) {
         throw new Error("Not implemented");
     }
+    overlapsWith(sX, sY, eX, eY) {
+        throw new Error("Not implemented");
+        return rectsOverlap(sX, sY, eX, eY, this.startX, this.startY, this.endX, this.endY);
+    }
     fitsWithin(sX, sY, eX, eY) {
         throw new Error("Not implemented");
     }
 }
 
 class Group extends TileLike {
-    constructor(parent) {
-        super(parent);
+    constructor(ID, parent) {
+        super(ID, parent);
         this.children = [];
     }
     remove(index) {
@@ -146,20 +145,6 @@ class Group extends TileLike {
         this.children.push(child);
         child.parent = this;
     }
-    sendToBack(child) {
-        const index = this.children.indexOf(child);
-        if (index !== -1) {
-            let c = this.children.splice(index, 1)[0];
-            this.children.unshift(c);
-        }
-    }
-    sendToFront(child) {
-        const index = this.children.indexOf(child);
-        if (index !== -1) {
-            let c = this.children.splice(index, 1)[0];
-            this.children.push(c);
-        }
-    }
     [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
     }
@@ -177,13 +162,6 @@ class Group extends TileLike {
         for(let child of this.children) {
             child.setColor(color);
         }
-    }
-    clone(offsetX, offsetY) {
-        let newGroup = new Group(this.parent);
-        for(let child of this.children) {
-            newGroup.addChild(child.clone(offsetX, offsetY));
-        }
-        return newGroup;
     }
     move(offsetX, offsetY) {
         for(let child of this.children) {
@@ -250,6 +228,14 @@ class Group extends TileLike {
         }
         return false;
     }
+    overlapsWith(sX, sY, eX, eY) {
+        for(let child of this.children) {
+            if(child.overlapsWith(sX, sY, eX, eY)) {
+                return true;
+            }
+        }
+        return false;
+    }
     fitsWithin(sX, sY, eX, eY) {
         for(let child of this.children) {
             if(!child.fitsWithin(sX, sY, eX, eY)) {
@@ -262,8 +248,8 @@ class Group extends TileLike {
 }
 
 class Tile extends TileLike {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, parent);
         this.startX = startX;
         this.startY = startY;
         this.endX = endX;
@@ -276,10 +262,6 @@ class Tile extends TileLike {
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         throw new Error("Not implemented");
-    }
-    clone(offsetX, offsetY) {
-        let newTile = new this.constructor(this.startX + offsetX, this.startY + offsetY, this.endX + offsetX, this.endY + offsetY, this.rotation, this.color, this.parent);
-        return newTile;
     }
     move(offsetX, offsetY) {
         this.startX += offsetX;
@@ -313,8 +295,9 @@ class Tile extends TileLike {
 }
 
 class RectTile extends Tile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
+        this.name = "RectTile";
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         rect(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
@@ -325,8 +308,8 @@ class RectTile extends Tile {
 }
 
 class EllipseTile extends Tile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         ellipse(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
@@ -341,8 +324,8 @@ class EllipseTile extends Tile {
 }
 
 class QuadrantTile extends Tile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         let w = eX - sX + 1;
@@ -418,8 +401,8 @@ class QuadrantTile extends Tile {
 }
 
 class InverseQuadrantTile extends Tile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         push();
@@ -487,8 +470,8 @@ class InverseQuadrantTile extends Tile {
 }
 
 class WedgeTile extends Tile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         switch(int(r)) {
@@ -521,8 +504,8 @@ class WedgeTile extends Tile {
 }
 
 class BezierWedgeTile extends WedgeTile {
-    constructor(startX, startY, endX, endY, rotation, color, parent) {
-        super(startX, startY, endX, endY, rotation, color, parent);
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
         let c = BezierWedgeTile.getStartControls(startX, startY, endX, endY, rotation);
         this.startControlX = c.x1;
         this.startControlY = c.y1;
@@ -606,7 +589,9 @@ class BezierWedgeTile extends WedgeTile {
     }
     drawOutline(offsetX, offsetY) {
         BezierWedgeTile.drawRaw2(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.getStartControlX()+offsetX, this.getStartControlY()+offsetY, this.getEndControlX()+offsetX, this.getEndControlY()+offsetY, this.rotation, this.getLayer());
+        push();
         this.drawControls(offsetX, offsetY);
+        pop();
     }
     drawControls(offsetX, offsetY) {
         let corners = [

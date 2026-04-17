@@ -119,13 +119,12 @@ main {
     justify-content: space-between;
 }
 #centerArea > div {
-    /* width: min(400px, 95%); */
+    max-width: min(400px, 50%);
     height:100%;
     display: flex;
     gap: 5px;
     flex-direction: column;
     background: none;
-    pointer-events: none;
     overflow-x: hidden;
     overflow-y: auto;
 }

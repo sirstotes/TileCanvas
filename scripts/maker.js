@@ -16,7 +16,7 @@ class Maker {
         this.width = width;
         this.height = height;
         this.resolution = resolution;
-        this.layers = [new Layer(this)];
+        this.layers = [new Layer(ID.getNext(), this)];
         this.shouldDrawGrid = true;
         this.currentTool = Maker.TOOLS.RECT;
         this.currentTool.onEnable(this);
@@ -34,6 +34,30 @@ class Maker {
         this.pMouseX = 0;
         this.pMouseY = 0;
         this.backgroundColor = '#FFFFFF';
+        this.actions = [];
+        this.currentAction = -1;
+        this.newActions = [];
+    }
+    addAction(action) {
+        this.newActions.push(action);
+    }
+    submitActions() {
+        if(this.newActions.length > 0) {
+            if(this.currentAction < this.actions.length - 1) {
+                this.actions.splice(this.currentAction + 1, this.actions.length - this.currentAction + 1);
+            }
+            let action;
+            if(this.newActions.length > 1) {
+                action = new MultiAction(this.newActions);
+            } else {
+                action = this.newActions[0];
+            }
+            console.log("Submitting: "+action.toString());
+            this.actions.push(action);
+            this.currentAction ++;
+            this.newActions = [];
+            return action.run();
+        }
     }
     draw() {
         if(this.backgroundColor) {
@@ -131,10 +155,18 @@ class Maker {
         return this.selection instanceof Selection;
     }
     undo() {
-
+        if(this.currentAction > -1) {
+            console.log("Undo: "+this.actions[this.currentAction].toString());
+            this.actions[this.currentAction].undo();
+            this.currentAction --;
+        }
     }
     redo() {
-
+        if(this.currentAction < this.actions.length - 1) {
+            this.currentAction ++;
+            console.log("Redo: "+this.actions[this.currentAction].toString());
+            this.actions[this.currentAction].run();
+        }
     }
     downloadCanvas(fileName) {
         if(this.backgroundColor) {
@@ -166,16 +198,26 @@ class Maker {
     }
     drawGrid() {
         strokeWeight(1);
-        stroke(200);
         for (let x = 0; x < width; x += this.getActiveLayer().getGridSize()) {
+            if(x == width/2) {
+                stroke(100);
+            } else {
+                stroke(200);
+            }
             line(x, 0, x, height);
         }
         for (let y = 0; y < height; y += this.getActiveLayer().getGridSize()) {
+            if(y == height/2) {
+                stroke(100);
+            } else {
+                stroke(200);
+            }
             line(0, y, width, y);
         }
     }
     clear() {
-        this.layers = [new Layer(this)];
+        ID.reset();
+        this.layers = [new Layer(ID.getNext(), this)];
         this.selection = undefined;
     }
     setColor(color) {
@@ -260,12 +302,10 @@ class Maker {
     }
     groupSelection() {
         if(this.selection.tiles.length > 1) {
-            let newGroup = new Group(this.getActiveLayer());
-            for(let shape of this.selection.tiles) {
-                newGroup.addChild(this.getActiveLayer().removeChild(shape));
-            }
-            this.getActiveLayer().addChild(newGroup);
-            this.selection = new Selection([newGroup]);
+            let newGroupID = ID.getNext();
+            let tileIDs = this.selection.tiles.map((tile) => tile.ID);
+            this.addAction(new CreateGroupAction(newGroupID, tileIDs, this.getActiveLayer().ID));
+            this.submitActions();
         }
     }
 
@@ -273,31 +313,48 @@ class Maker {
         let newSelection = [];
         for(let shape of this.selection.tiles) {
             if(shape instanceof Group) {
-                newSelection.push(...shape.dissolve());
+                newSelection.push(...shape.children);
+                this.addAction(new RemoveGroupAction(shape));
+            } else {
+                newSelection.push(shape);
             }
         }
+        this.submitActions();
         this.selection = new Selection(newSelection);
     }
 
-    duplicateSelection() {
-        let newSelection = [];
-        for(let shape of this.selection.tiles) {
-            let clone = shape.clone(1, 1);
-            shape.parent.addChild(clone);
-            newSelection.push(clone);
+    addClones(shape) {
+        if(shape instanceof Tile) {
+            this.addAction(new AddTileAction(ID.getNext(), shape.constructor, shape.startX+1, shape.startY+1, shape.endX+1, shape.endY+1, shape.rotation, shape.color, this.getActiveLayer().ID))
+        } else if (shape instanceof Group) {
+            for(let child of shape.children) {
+                this.addClones(child);
+            }
         }
-        this.selection = new Selection(newSelection);
+    }
+
+    duplicateSelection() {
+        for(let shape of this.selection.tiles) {
+            this.addClones(shape);
+        }
+        let returns = this.submitActions();
+        if(returns != null) {
+            let newSelection = returns.map((tileID) => ID.getOrNull(tileID)).filter((tile) => tile != null);
+            this.selection = new Selection(newSelection);
+        }
     }
 
     backSelection() {
         for(let shape of this.selection.tiles) {
-            shape.parent.sendToBack(shape);
+            this.addAction(new ReorderObjectAction(shape, 0));
         }
+        this.submitActions();
     }
     frontSelection() {
         for(let shape of this.selection.tiles) {
-            shape.parent.sendToFront(shape);
+            this.addAction(new ReorderObjectAction(shape, shape.parent.children.length - 1));
         }
+        this.submitActions();
     }
     rotateSelection(direction) {
         if(direction > 0) {
@@ -307,7 +364,7 @@ class Maker {
         }
     }
     eraseSelection() {
-        this.selection.erase();
+        this.selection.erase(this);
         this.selection = null;
     }
 }

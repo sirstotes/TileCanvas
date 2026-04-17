@@ -134,7 +134,7 @@ function loadColorsFromString(string) {
 
 function loadColors(colors) {
     document.getElementById("colorPalette").childNodes = [];
-    palette = colors;
+    palette = [...colors];
     refreshDisplays();
 }
 
@@ -351,35 +351,76 @@ function draw() {
 
     globalMouse2.x = globalMouse.x;
     globalMouse2.y = globalMouse.y;
-
-    for(let button of document.getElementsByClassName("shapeButton")) {
-        button.childNodes[0].style = "rotate:"+maker.getRotation()*90+"deg;"
+    if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.UI) {
+        for(let button of document.getElementsByClassName("shapeButton")) {
+            button.childNodes[0].style = "rotate:"+maker.getRotation()*90+"deg;"
+        }
     }
 }
 
+controlPressed = false;
+shiftPressed = false;
+
 function keyPressed() {
-    if(key === 'r') {
-        setTool("RECT");
-    } else if(key === 'c') {
-        setTool("ELLIPSE");
-    } else if(key === 'q') {
-        setTool("QUADRANT");
-    } else if(key === 'i') {
-        setTool("INVERSE_QUADRANT");
-    } else if(key === 'w') {
-        setTool("WEDGE");
-    } else if(key === 'b') {
-        setTool("BEZIER_WEDGE");
-    } else if(key === 'e') {
-        setTool("ERASE");
-    } else if(key === 'p') {
-        setTool("PAINT");
-    } else if(key === 's') {
-        setTool("SELECT");
-    } else if(key === 'g') {
-        toggleGrid(document.getElementById("gridButton"));
-    } else if(key === 'l') {
-        toggleMenu('layers', document.getElementById("layerMenuButton"));
+    switch(key) {
+        case 'r':
+            setTool("RECT");
+        break;
+        case 'c':
+            setTool("ELLIPSE");
+        break;
+        case 'q':
+            setTool("QUADRANT");
+        break;
+        case 'i':
+            setTool("INVERSE_QUADRANT");
+        break;
+        case 'w':
+            setTool("WEDGE");
+        break;
+        case 'b':
+            setTool("BEZIER_WEDGE");
+        break;
+        case 'e':
+            setTool("ERASE");
+        break;
+        case 'p':
+            setTool("PAINT");
+        break;
+        case 's':
+            setTool("SELECT");
+        break;
+        case 'g':
+            toggleGrid(document.getElementById("gridButton"));
+        break;
+        case 'l':
+            toggleMenu('layers', document.getElementById("layerMenuButton"));
+        break;
+        case 'Control':
+            controlPressed = true;
+        break;
+        case 'Shift':
+            shiftPressed = true;
+        break;
+        case 'z': case 'Z':
+            if (controlPressed) {
+                if(shiftPressed) {
+                    redo();
+                } else {
+                    undo();
+                }
+            }
+        break;
+    }
+}
+function keyReleased() {
+    switch (key) {
+        case 'Control':
+            controlPressed = false;
+        break; 
+        case 'Shift':
+            shiftPressed = false;
+        break; 
     }
 }
 
@@ -389,9 +430,7 @@ function mousePressed(event) {
     }
 }
 function mouseReleased(event) {
-    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
-        clickingOnCanvas = false;
-    }
+    clickingOnCanvas = false;
 }
 function mouseWheel(event) {
     if (event.delta > 0) {
@@ -407,9 +446,7 @@ function touchStarted(event) {
     }
 }
 function touchEnded(event) {
-    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
-        clickingOnCanvas = false;
-    }
+    clickingOnCanvas = false;
 }
 
 

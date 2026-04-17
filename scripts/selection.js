@@ -12,19 +12,21 @@ class Selection {
         for(let tile of this.tiles) {
             maker.allOverlapping(tile.startX, tile.startY, tile.endX, tile.endY, (t) => {
                 if(!this.includes(t)) {
-                    t.erase();
+                    maker.addAction(new RemoveTileAction(t.ID));
                 }
             })
         }
+        maker.submitActions();
     }
     removeIdentical(maker) {
         for(let tile of this.tiles) {
             maker.getActiveLayer().forEach((t) => {
                 if(t != tile && t instanceof Tile && t.sameAs(tile)) {
-                    t.erase();
+                    maker.addAction(new RemoveTileAction(t.ID));
                 }
             })
         }
+        maker.submitActions();
     }
     remove(tile) {
         if(this.includes(tile)) {
@@ -42,11 +44,12 @@ class Selection {
         this.displayOffsetX = 0;
         this.displayOffsetY = 0;
     }
-    applyOffset() {
+    applyOffset(maker) {
         this.hasMoved = true;
         for(let tile of this.tiles) {
-            tile.move(this.displayOffsetX, this.displayOffsetY);
+            maker.addAction(new MoveTileAction(tile.ID, this.displayOffsetX, this.displayOffsetY));
         }
+        maker.submitActions();
         this.resetOffset();
     }
     drawOutlines() {
@@ -68,10 +71,11 @@ class Selection {
     add(tile) {
         this.tiles.push(tile);
     }
-    erase() {
-        for(let shape of this.tiles) {
-            shape.erase();
+    erase(maker) {
+        for(let tile of this.tiles) {
+            maker.addAction(new RemoveTileAction(tile));
         }
+        maker.submitActions();
     }
     onlyBezier() {
         return this.tiles.length == 1 && this.tiles[0] instanceof BezierWedgeTile;
