@@ -73,4 +73,7 @@ class Selection {
             shape.erase();
         }
     }
+    onlyBezier() {
+        return this.tiles.length == 1 && this.tiles[0] instanceof BezierWedgeTile;
+    }
 }

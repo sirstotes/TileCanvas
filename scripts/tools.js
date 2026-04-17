@@ -290,7 +290,7 @@ class SelectTool extends Tool {
             drawingContext.setLineDash([]);
         }
     }
-    update(makere, mouseX, mouseY, mousePressed) {
+    update(maker, mouseX, mouseY, mousePressed) {
         if(maker.hasSelection()) {
             if(maker.getSelection().collidesWith(getMouseX(), getMouseY())) {
                 this.hoveringSelection = true;
@@ -372,5 +372,54 @@ class ColorSelectTool extends Tool {
             setTool(this.previousTool.name);
             console.log(this.previousTool.name);
         });
+    }
+}
+
+class BezierTool extends Tool {
+    constructor () {
+        super("BEZIER");
+        this.hovering = 0;
+        this.moving = 0;
+        this.bezierTile;
+    }
+    onEnable(maker) {
+        this.bezierTile = maker.getSelection().tiles[0];
+    }
+    draw() {
+        if(this.hovering) {
+            cursor(MOVE);
+        } else {
+            cursor(ARROW);
+        }
+    }
+    update(maker) {
+        if(!this.moving) {
+            let al = maker.getActiveLayer();
+            if(dist(getMouseX(), getMouseY(), al.toSCF(this.bezierTile.getStartControlX()), al.toSCF(this.bezierTile.getStartControlY())) < al.getGridSize()) {
+                this.hovering = 1;
+            } else if(dist(getMouseX(), getMouseY(), al.toSCF(this.bezierTile.getEndControlX()), al.toSCF(this.bezierTile.getEndControlY())) < al.getGridSize()) {
+                this.hovering = 2;
+            } else {
+                this.hovering = 0;
+            }
+        }
+    }
+    onMousePressed(maker) {
+        if(this.hovering) {
+            this.moving = this.hovering;
+        }
+    }
+    onDrag(maker) {
+        if(this.moving == 1) {
+            this.bezierTile.setStartOffset(maker.getXOffset(), maker.getYOffset());
+        } else if(this.moving == 2) {
+            this.bezierTile.setEndOffset(maker.getXOffset(), maker.getYOffset());
+        }
+    }
+    onMouseReleased(maker) {
+        if(this.moving) {
+            this.moving = 0;
+            this.bezierTile.applyOffset();
+        }
     }
 }

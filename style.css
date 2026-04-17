@@ -3,10 +3,11 @@
     --gray: #4e5567;
     --white: #F2F7F8;
     --highlight-1: #5ab1bb;
-    --highlight-2: #a5c882;
-    --highlight-3: #f7dd72;
+    --highlight-2: #f7dd72;
+    --highlight-3: #a5c882;
 }
 html, body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
     overscroll-behavior-y: contain;
     overflow: hidden;
 }
@@ -19,6 +20,13 @@ body {
 }
 div {
     background-color: var(--gray);
+}
+h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+P {
+    margin-top: 0;
 }
 button, input, select {
     background-color: var(--highlight-1);
@@ -48,18 +56,6 @@ button img {
 .highlighted {
     background-color: var(--highlight-3);
 }
-::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--gray);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--highlight-1);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--highlight-2);
-}
 main {
     position: absolute;
     top: 0;
@@ -85,16 +81,14 @@ main {
     margin: 0;
     display: flex;
     flex-direction: row;
+    gap: 2px;
 }
 .toolbarRow > button {
     flex-grow: 1;
 }
-.toolbarRow > :nth-last-child(n+2) {
-    margin-right: 2px;
-}
 .toolbarRow > span {
-    flex-grow: 1;
     display:flex;
+    gap: 2px;
 }
 .toolbarRow > span > button {
     flex-grow: 1;
@@ -113,30 +107,36 @@ main {
     background: none;
     pointer-events: none;
 }
+#UI > div {
+    background: none;
+    pointer-events: none;
+}
 #centerArea {
     flex-grow:1;
+    padding: 5px;
     display: flex;
     overflow: hidden;
-    background: none;
-    pointer-events: none;
+    justify-content: space-between;
 }
 #centerArea > div {
-    width:50%;
+    width: min(400px, 50%);
     height:100%;
     display: flex;
+    gap: 5px;
     flex-direction: column;
-    overflow: scroll;
     background: none;
     pointer-events: none;
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 .sideMenu {
-    flex-grow:1;
+    background-color: var(--highlight-3);
+    color: var(--black);
     padding:10px;
     display:flex;
     flex-direction: column;
     gap: 5px;
     pointer-events: auto;
-    overflow-y: scroll;
 }
 .sideMenu > span {
     display: flex;
@@ -147,6 +147,11 @@ main {
 .sideMenu > span > input, .sideMenu > span > select {
     flex-grow: 1;
     background-color:var(--white);
+}
+#bottomBar {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 5px;
 }
 .inlineInput {
     display: inline-block;

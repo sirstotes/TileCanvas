@@ -362,12 +362,12 @@ class QuadrantTile extends Tile {
                 break;
         }
     }
-    drawOutline() {
-        QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
-        let sX = this.getLayer().toSCF(this.startX);
-        let sY = this.getLayer().toSCF(this.startY);
-        let eX = this.getLayer().toSCC(this.endX);
-        let eY = this.getLayer().toSCC(this.endY);
+    drawOutline(offsetX, offsetY) {
+        QuadrantTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
+        let sX = this.getLayer().toSCF(this.startX+offsetX);
+        let sY = this.getLayer().toSCF(this.startY+offsetY);
+        let eX = this.getLayer().toSCC(this.endX+offsetX);
+        let eY = this.getLayer().toSCC(this.endY+offsetY);
         switch(int(this.rotation)) {
             case 0:
                 line(sX, sY, eX, sY);
@@ -430,13 +430,13 @@ class InverseQuadrantTile extends Tile {
         RectTile.drawRaw(sX, sY, eX, eY, r, layer);
         pop();
     }
-    drawOutline() {
+    drawOutline(offsetX, offsetY) {
         noFill();
-        QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, (this.rotation+2)%4, this.getLayer());
-        let sX = this.getLayer().toSCF(this.startX);
-        let sY = this.getLayer().toSCF(this.startY);
-        let eX = this.getLayer().toSCC(this.endX);
-        let eY = this.getLayer().toSCC(this.endY);
+        QuadrantTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, (this.rotation+2)%4, this.getLayer());
+        let sX = this.getLayer().toSCF(this.startX+offsetX);
+        let sY = this.getLayer().toSCF(this.startY+offsetY);
+        let eX = this.getLayer().toSCC(this.endX+offsetX);
+        let eY = this.getLayer().toSCC(this.endY+offsetY);
         switch(int(this.rotation)) {
             case 0:
                 line(sX, sY, eX, sY);
@@ -528,8 +528,43 @@ class BezierWedgeTile extends WedgeTile {
         this.startControlY = c.y1;
         this.endControlX = c.x2;
         this.endControlY = c.y2;
+        this.startControlOffsetX = 0;
+        this.startControlOffsetY = 0;
+        this.endControlOffsetX = 0;
+        this.endControlOffsetY = 0;
+    }
+    getStartControlX() {
+        return this.startControlX + this.startControlOffsetX;
+    }
+    getStartControlY() {
+        return this.startControlY + this.startControlOffsetY;
+    }
+    getEndControlX() {
+        return this.endControlX + this.endControlOffsetX;
+    }
+    getEndControlY() {
+        return this.endControlY + this.endControlOffsetY;
+    }
+    setStartOffset(x, y) {
+        this.startControlOffsetX = x;
+        this.startControlOffsetY = y;
+    }
+    setEndOffset(x, y) {
+        this.endControlOffsetX = x;
+        this.endControlOffsetY = y;
+    }
+    applyOffset() {
+        this.startControlX += this.startControlOffsetX;
+        this.startControlY += this.startControlOffsetY;
+        this.endControlX += this.endControlOffsetX;
+        this.endControlY += this.endControlOffsetY;
+        this.startControlOffsetX = 0;
+        this.startControlOffsetY = 0;
+        this.endControlOffsetX = 0;
+        this.endControlOffsetY = 0;
     }
     move(offsetX, offsetY) {
+        super.move(offsetX, offsetY);
         this.startControlX += offsetX;
         this.startControlY += offsetY;
         this.endControlX += offsetX;
@@ -566,26 +601,26 @@ class BezierWedgeTile extends WedgeTile {
     }
     draw() {
         fill(this.color);
-        BezierWedgeTile.drawRaw2(this.startX, this.startY, this.endX, this.endY, this.startControlX, this.startControlY, this.endControlX, this.endControlY, this.rotation, this.getLayer());
+        BezierWedgeTile.drawRaw2(this.startX, this.startY, this.endX, this.endY, this.getStartControlX(), this.getStartControlY(), this.getEndControlX(), this.getEndControlY(), this.rotation, this.getLayer());
         //this.drawControls();
     }
-    drawOutline() {
-        super.drawOutline();
-        this.drawControls();
+    drawOutline(offsetX, offsetY) {
+        BezierWedgeTile.drawRaw2(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.getStartControlX()+offsetX, this.getStartControlY()+offsetY, this.getEndControlX()+offsetX, this.getEndControlY()+offsetY, this.rotation, this.getLayer());
+        this.drawControls(offsetX, offsetY);
     }
-    drawControls() {
+    drawControls(offsetX, offsetY) {
         let corners = [
-            {x: this.getLayer().toSCF(this.startX), y: this.getLayer().toSCC(this.endY)},
-            {x: this.getLayer().toSCF(this.startX), y: this.getLayer().toSCF(this.startY)},
-            {x: this.getLayer().toSCC(this.endX), y: this.getLayer().toSCF(this.startY)},
-            {x: this.getLayer().toSCC(this.endX), y: this.getLayer().toSCC(this.endY)},
+            {x: this.getLayer().toSCF(this.startX+offsetX), y: this.getLayer().toSCC(this.endY+offsetY)},
+            {x: this.getLayer().toSCF(this.startX+offsetX), y: this.getLayer().toSCF(this.startY+offsetY)},
+            {x: this.getLayer().toSCC(this.endX+offsetX), y: this.getLayer().toSCF(this.startY+offsetY)},
+            {x: this.getLayer().toSCC(this.endX+offsetX), y: this.getLayer().toSCC(this.endY+offsetY)},
         ]
         stroke(255, 0, 0);
         strokeWeight(3);
-        line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
-        line(corners[this.rotation].x, corners[this.rotation].y, this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
+        line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSC(this.getStartControlX()+offsetX), this.getLayer().toSC(this.getStartControlY()+offsetY));
+        line(corners[this.rotation].x, corners[this.rotation].y, this.getLayer().toSC(this.getEndControlX()+offsetX), this.getLayer().toSC(this.getEndControlY()+offsetY));
         strokeWeight(10);
-        point(this.getLayer().toSC(this.startControlX), this.getLayer().toSC(this.startControlY));
-        point(this.getLayer().toSC(this.endControlX), this.getLayer().toSC(this.endControlY));
+        point(this.getLayer().toSC(this.getStartControlX()+offsetX), this.getLayer().toSC(this.getStartControlY()+offsetY));
+        point(this.getLayer().toSC(this.getEndControlX()+offsetX), this.getLayer().toSC(this.getEndControlY()+offsetY));
     }
 }

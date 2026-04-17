@@ -9,7 +9,8 @@ class Maker {
         ERASE: new EraseTool(),
         PAINT: new PaintTool(),
         SELECT: new SelectTool(),
-        EYEDROP: new ColorSelectTool()
+        EYEDROP: new ColorSelectTool(),
+        BEZIER: new BezierTool()
     }
     constructor(width, height, resolution) {
         this.width = width;
@@ -175,6 +176,7 @@ class Maker {
     }
     clear() {
         this.layers = [new Layer(this)];
+        this.selection = undefined;
     }
     setColor(color) {
         this.currentColor = color;

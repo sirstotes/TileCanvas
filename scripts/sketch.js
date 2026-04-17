@@ -181,6 +181,7 @@ function setup() {
     setTool("RECT");
     setToolOption("REPLACEMENT_MODE", document.getElementById("replacementModeSelect").value);
     setToolOption("DRAG_MODE", document.getElementById("placementModeSelect").value);
+    setToolOption("SELECTION_MODE", document.getElementById("selectionModeSelect").value);
 
     rectMode(CORNERS);
     ellipseMode(CORNERS);
@@ -202,6 +203,11 @@ function draw() {
 
     if(maker.hasSelection()) {
         document.getElementById("selectionTools").style = "";
+        if(maker.getSelection().onlyBezier()) {
+            document.getElementById("bezierControls").style = "";
+        } else {
+            document.getElementById("bezierControls").style = "display: none;";
+        }
     } else {
         document.getElementById("selectionTools").style = "display: none;";
     }

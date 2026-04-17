@@ -29,7 +29,8 @@
       <div id="centerArea">
         <div>
           <div id="menu" class="sideMenu" style="display: none;">
-            <h3>Settings</h3>
+            <h3>Tiles</h3>
+            <p>Welcome. This is a project I have worked on instead of studying and doing homework. I hope you enjoy it!</p>
             <span>
               Canvas Size: 
               <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32">
@@ -51,6 +52,7 @@
             <button onclick="clearCanvas()">Clear Canvas</button>
             <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
           </div>
+          <div style="background:none;pointer-events: none;flex-grow:1;"></div>
           <div id="toolSettings" class="sideMenu" style="display: none;">
             <h3>Tool Settings</h3>
             <span>
@@ -76,18 +78,20 @@
               </select>
             </span>
           </div>
+        </div>
+        <div>
+          <div id="layers" class="sideMenu" style="display: none;float:right;">
+            <h3>Layers</h3>
+          </div>
+          <div style="background:none;pointer-events: none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
+            <h3>Palette</h3>
             <div id="paletteButtons"></div>
             <span>
               <input class="inlineInput" id="newColorText" type="text" value="#ffffff">
               <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/add.png"></button>
               <input type="color" id="newColorPicker" value="#ff0000" onchange="addColor(this.value)">
             </span>
-          </div>
-        </div>
-        <div>
-          <div id="layers" class="sideMenu" style="display: none;float:right;">
-            Not done
           </div>
         </div>
       </div>
@@ -100,16 +104,16 @@
             <button class="shapeButton" id="QUADRANT_Button" onclick="setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
             <button class="shapeButton" id="INVERSE_QUADRANT_Button" onclick="setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
             <button class="shapeButton" id="WEDGE_Button" onclick="setTool('WEDGE')"><img src="assets/wedge.png"></button>
-            <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')">bw</button>
+            <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')"><img src="assets/bezierWedge.png"></button>
             <button id="ERASE_Button" onclick="setTool('ERASE')"><img src="assets/eraser.png"></button>
             <button id="PAINT_Button" onclick="setTool('PAINT')"><img src="assets/paint-brush.png"></button>
             <button id="SELECT_Button" onclick="setTool('SELECT')"><img src="assets/square-dashed.png"></button>
           </div>
           <div class="toolbarRow">
-            <button id="paletteButton" onclick="toggleMenu('paletteSettings', this)"><img src="assets/palette.png"></button>
-            <button id="EYEDROP_Button" onclick="setTool('EYEDROP')"><img src="assets/eye-dropper.png"></button>
             <span id="colorPalette" style="flex-grow: 4;"></span>
             <input type="color" id="colorPicker" value="#ff0000" onchange="setColor(this.value)">
+            <button id="EYEDROP_Button" onclick="setTool('EYEDROP')"><img src="assets/eye-dropper.png"></button>
+            <button id="paletteButton" onclick="toggleMenu('paletteSettings', this)"><img src="assets/palette.png"></button>
           </div>
         </div>
         <div class="toolbar extraBar" style="display:none;" id="selectionTools">
@@ -125,6 +129,9 @@
             <button onclick="backSelection()"><img src="assets/arrow-to-bottom.png"></button>
             <button onclick="frontSelection()"><img src="assets/arrow-to-top.png"></button>
             <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
+            <span id="bezierControls">
+              <button id="BEZIER_Button" onclick="setTool('BEZIER')"><img src="assets/location-crosshairs.png"></button>
+            </span>
           </div>
         </div>
       </div>
