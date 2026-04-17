@@ -291,7 +291,7 @@ class Tile extends TileLike {
         this.color = color;
     }
     sameAs(otherTile) {
-        return this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation && this.constructor == otherTile.constructor;
+        return this.constructor == otherTile.constructor && this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation;
     }
     draw() {
         fill(this.color);
