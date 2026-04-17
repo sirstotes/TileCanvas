@@ -91,7 +91,7 @@ function redo() {
 
 function toggleGrid(button) {
     maker.toggleGrid();
-    button.classList = shouldDrawGrid ? ["highlighted"] : []
+    button.classList = maker.shouldDrawGrid ? ["highlighted"] : []
 }
 
 function downloadCanvas() {
@@ -166,6 +166,34 @@ function clearCanvas() {
     maker.clear();
 }
 
+function zoom(x) {
+    canvasScale = constrain(canvasScale + x, 0.1, 3);
+    document.getElementById("canvasContainer").style.scale = canvasScale;
+}
+
+function pan(x, y) {
+    canvasXOffset = constrain(canvasXOffset + int(x) / canvasScale, -width, width);
+    canvasYOffset = constrain(canvasYOffset + int(y) / canvasScale, -height, height);
+    document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
+}
+
+function continuousPress(button, callback) {
+    button.addEventListener("mousedown", () => {
+        button.pressInterval = setInterval(callback, 20);
+        setTimeout(() => {clearInterval(button.pressInterval)}, 3000);
+    });
+    button.addEventListener("touchstart", () => {
+        button.pressInterval = setInterval(callback, 20);
+        setTimeout(() => {clearInterval(button.pressInterval)}, 3000);
+    });
+    button.addEventListener("mouseup", () => {
+        clearInterval(button.pressInterval);
+    });
+    button.addEventListener("touchend", () => {
+        clearInterval(button.pressInterval);
+    });
+}
+
 let canvas;
 function setup() {
     let initialSize = document.getElementById("canvasW").value;
@@ -182,6 +210,13 @@ function setup() {
     setToolOption("REPLACEMENT_MODE", document.getElementById("replacementModeSelect").value);
     setToolOption("DRAG_MODE", document.getElementById("placementModeSelect").value);
     setToolOption("SELECTION_MODE", document.getElementById("selectionModeSelect").value);
+
+    continuousPress(document.getElementById("zoomInButton"), () => {zoom(0.05)});
+    continuousPress(document.getElementById("zoomOutButton"), () => {zoom(-0.05)});
+    continuousPress(document.getElementById("panLeftButton"), () => {pan(-10, 0)});
+    continuousPress(document.getElementById("panRightButton"), () => {pan(10, 0)});
+    continuousPress(document.getElementById("panUpButton"), () => {pan(0, -10)});
+    continuousPress(document.getElementById("panDownButton"), () => {pan(0, 10)});
 
     rectMode(CORNERS);
     ellipseMode(CORNERS);
@@ -213,9 +248,7 @@ function draw() {
     }
 
     if(mouseIsPressed && mouseButton != "left") {
-        canvasXOffset += (globalMouse.x - globalMouse2.x) / canvasScale;
-        canvasYOffset += (globalMouse.y - globalMouse2.y) / canvasScale;
-        document.getElementById("canvasContainer").style.transform = "translate("+canvasXOffset+"px, "+canvasYOffset+"px)";
+        pan(globalMouse.x - globalMouse2.x, globalMouse.y - globalMouse2.y);
     }
 
     globalMouse2.x = globalMouse.x;
@@ -228,31 +261,22 @@ function draw() {
 
 function keyPressed() {
     if(key === 'r') {
-        selectButton(document.getElementById("rectButton"));
         setTool("RECT");
     } else if(key === 'c') {
-        selectButton(document.getElementById("ellipseButton"));
         setTool("ELLIPSE");
     } else if(key === 'q') {
-        selectButton(document.getElementById("quadrantButton"));
         setTool("QUADRANT");
     } else if(key === 'i') {
-        selectButton(document.getElementById("inverseQuadrantButton"));
         setTool("INVERSE_QUADRANT");
     } else if(key === 'w') {
-        selectButton(document.getElementById("wedgeButton"));
         setTool("WEDGE");
     } else if(key === 'b') {
-        selectButton(document.getElementById("bezierWedgeButton"));
         setTool("BEZIER_WEDGE");
     } else if(key === 'e') {
-        selectButton(document.getElementById("eraseButton"));
         setTool("ERASE");
     } else if(key === 'p') {
-        selectButton(document.getElementById("paintButton"));
         setTool("PAINT");
     } else if(key === 's') {
-        selectButton(document.getElementById("selectButton"));
         setTool("SELECT");
     } else if(key === 'g') {
         toggleGrid(document.getElementById("gridButton"));
@@ -271,7 +295,6 @@ function mouseReleased(event) {
         clickingOnCanvas = false;
     }
 }
-
 function mouseWheel(event) {
     if (event.delta > 0) {
         canvasScale = max(canvasScale - 0.1, 0.1);
@@ -280,10 +303,25 @@ function mouseWheel(event) {
     }
     document.getElementById("canvasContainer").style.scale = canvasScale;
 }
+function touchStarted(event) {
+    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
+        clickingOnCanvas = true;
+    }
+}
+function touchEnded(event) {
+    if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
+        clickingOnCanvas = false;
+    }
+}
+
 
 let globalMouse = { x: undefined, y: undefined };
 let globalMouse2 = { x: undefined, y: undefined };
 
 window.addEventListener('mousemove', (event) => {
     globalMouse = { x: event.clientX, y: event.clientY };
+});
+
+document.addEventListener('gesturestart', function(e) {
+  e.preventDefault();
 });

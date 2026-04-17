@@ -300,8 +300,8 @@ class SelectTool extends Tool {
         }
     }
     onDrag(maker) {
-        if(this.moving) {
-            maker.getSelection().setOffset(maker.getXOffset(), maker.getYOffset())
+        if(this.moving && maker.hasSelection()) {
+            maker.getSelection().setOffset(maker.getXOffset(), maker.getYOffset());
         }
     }
     onDisable() {
@@ -313,7 +313,7 @@ class SelectTool extends Tool {
         }
     }
     onMouseReleased(maker) {
-        if(this.moving) {
+        if(this.moving && maker.hasSelection()) {
             this.moving = false;
             maker.getSelection().applyOffset();
         } else {

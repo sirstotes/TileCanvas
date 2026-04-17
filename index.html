@@ -15,15 +15,26 @@
       <div id="canvasContainer"></div>
     </main>
     <div id="UI">
-      <div id="topBar">
+      <div class="bar" id="topBar">
         <div class="toolbar">
           <div class="toolbarRow">
             <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
             <button disabled onclick="undo()"><img src="assets/undo.png"></button>
             <button disabled onclick="redo()"><img src="assets/redo.png"></button>
-            <button id="gridButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+            <button id="movementControlsButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
+            <button id="gridButton" onclick="toggleMenu('movementControls', this)"><img src="assets/arrows.png"></button>
             <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
           </div>
+        </div>
+        <div class="toolbar extraBar" id="movementControls" style="display:none;">
+            <div class="toolbarRow">
+              <button oncontextmenu="return false;" id="zoomInButton"><img src="assets/zoom-in.png"></button>
+              <button oncontextmenu="return false;" id="zoomOutButton"><img src="assets/zoom-out.png"></button>
+              <button oncontextmenu="return false;" id="panLeftButton"><img src="assets/angle-small-left.png"></button>
+              <button oncontextmenu="return false;" id="panRightButton"><img src="assets/angle-small-right.png"></button>
+              <button oncontextmenu="return false;" id="panUpButton"><img src="assets/angle-small-up.png"></button>
+              <button oncontextmenu="return false;" id="panDownButton"><img src="assets/angle-small-down.png"></button>
+            </div>
         </div>
       </div>
       <div id="centerArea">
@@ -33,9 +44,9 @@
             <p>Welcome. This is a project I have worked on instead of studying and doing homework. I hope you enjoy it!</p>
             <span>
               Canvas Size: 
-              <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="32">
+              <input class="inlineInput" id="canvasW" type="number" min="8" max="1024" value="16">
               by
-              <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="32">
+              <input class="inlineInput" id="canvasH" type="number" min="8" max="1024" value="16">
               <button class="inlineInput" onclick="setCanvasSize(int(document.getElementById('canvasW').value), int(document.getElementById('canvasH').value))">Apply</button>
             </span>
             <span>
@@ -58,9 +69,9 @@
             <span>
               <span style="width:40%;">Replacement Mode:</span>
               <select id="replacementModeSelect" onchange="setToolOption('REPLACEMENT_MODE', this.value)">
+                <option value="ALL">All</option>
                 <option value="IDENTICAL">Identical</option>
                 <option value="NONE">None</option>
-                <option value="ALL">All</option>
               </select>
             </span>
             <span>
@@ -81,7 +92,7 @@
         </div>
         <div>
           <div id="layers" class="sideMenu" style="display: none;float:right;">
-            <h3>Layers</h3>
+            <h3>Layers (Not yet implemented)</h3>
           </div>
           <div style="background:none;pointer-events: none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
@@ -95,7 +106,7 @@
           </div>
         </div>
       </div>
-      <div id="bottomBar">
+      <div class="bar" id="bottomBar">
         <div class="toolbar">
           <div class="toolbarRow">
             <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
