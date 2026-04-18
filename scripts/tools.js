@@ -82,7 +82,7 @@ class ShapeTool extends Tool {
         this.maker = maker;
     }
     draw(maker) {
-        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
+        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && (window.mobileAndTabletCheck || !maker.startEndEqual())) {
             strokeWeight(0);
             fill(maker.getColor());
             this.shapeType.drawRaw(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getActiveLayer());
@@ -323,7 +323,7 @@ class SelectTool extends Tool {
         cursor(ARROW);
     }
     onMousePressed(maker) {
-        if(this.hoveringSelection) {
+        if(this.hoveringSelection || (maker.hasSelection() && maker.getSelection().collidesWith(getMouseX(), getMouseY()))) {
             this.moving = true;
         }
     }
@@ -400,7 +400,7 @@ class BezierTool extends Tool {
     onEnable(maker) {
         this.bezierTile = maker.getSelection().tiles[0];
     }
-    draw() {
+    draw(maker) {
         if(this.hovering) {
             cursor(MOVE);
         } else {
@@ -436,5 +436,24 @@ class BezierTool extends Tool {
             this.moving = 0;
             this.bezierTile.applyOffset();
         }
+    }
+}
+
+class CropTool extends Tool {
+    constructor() {
+        super("CROP");
+    }
+    draw(maker) {
+        noFill();
+        stroke(0, 0, 0);
+        strokeWeight(3);
+        drawingContext.setLineDash([10, 10]);
+        let al = maker.getActiveLayer();
+        rect(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
+        drawingContext.setLineDash([]);
+    }
+    onMouseReleased(maker) {
+        maker.addAction(new ResizeCanvasAction(maker.width, maker.getEndX() - maker.getStartX() + 1, maker.height, maker.getEndY() - maker.getStartY() + 1, ));
+        maker.moveAll(-maker.getStartX(), -maker.getStartY());
     }
 }

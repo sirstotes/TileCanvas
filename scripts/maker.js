@@ -1,5 +1,6 @@
 class Maker {
     static TOOLS = {
+        CROP: new CropTool(),
         RECT: new RectTool(),
         ELLIPSE: new EllipseTool(),
         QUADRANT: new QuadrantTool(),
@@ -217,6 +218,9 @@ class Maker {
     }
     clear() {
         ID.reset();
+        this.actions = [];
+        this.newActions = [];
+        this.currentAction = -1;
         this.layers = [new Layer(ID.getNext(), this)];
         this.selection = undefined;
     }
@@ -366,5 +370,13 @@ class Maker {
     eraseSelection() {
         this.selection.erase(this);
         this.selection = null;
+    }
+    moveAll(x, y) {
+        for(let layer of this.layers) {
+            for(let object of layer) {
+                this.addAction(new MoveTileAction(object.ID, x, y));
+            }
+        }
+        maker.submitActions();
     }
 }

@@ -27,7 +27,7 @@ class ID {
         return ID.allObjects[id];
     }
     static reset() {
-        allObjects = [];
+        ID.allObjects = [];
     }
 }
 class Action {
@@ -245,5 +245,23 @@ class ReorderObjectAction extends Action {
             object.parent.children.splice(object.parent.children.indexOf(object), 1);
             object.parent.children.splice(this.indexBefore, 0, object);
         });
+    }
+}
+class ResizeCanvasAction extends Action {
+    constructor(widthBefore, widthAfter, heightBefore, heightAfter) {
+        super("REORDER");
+        this.widthBefore = widthBefore;
+        this.widthAfter = widthAfter;
+        this.heightBefore = heightBefore;
+        this.heightAfter = heightAfter;
+    }
+    toString() {
+        return `${this.name} ${this.widthBefore} ${this.widthAfter} ${this.heightBefore} ${this.heightAfter}`;
+    }
+    run() {
+        setCanvasSize(this.widthAfter, this.heightAfter);
+    }
+    undo() {
+        setCanvasSize(this.widthBefore, this.heightBefore);
     }
 }
