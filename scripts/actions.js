@@ -165,6 +165,32 @@ class MoveTileAction extends Action {
     }
 }
 
+class SetBezierAction extends Action {
+    constructor(tile, bezierIndex, x, y) {
+        super("SET BEZIER");
+        this.tileID = tile.ID;
+        this.bezierIndex = bezierIndex;
+        this.x = x;
+        this.y = y;
+        let q = tile.getBezier(bezierIndex);
+        this.pX = q.x;
+        this.pY = q.y;
+    }
+    toString() {
+        return `${this.name} ${this.tileID} ${this.bezierIndex} ${this.x} ${this.y}`;
+    }
+    run() {
+        ID.withObject(this.tileID, (tile) => {
+            tile.setBezier(this.bezierIndex, this.x, this.y);
+        });
+    }
+    undo() {
+        ID.withObject(this.tileID, (tile) => {
+            tile.setBezier(this.bezierIndex, this.pX, this.pY);
+        });
+    }
+}
+
 class CreateGroupAction extends Action {
     constructor(groupID, tileIDs, parentID) {
         super("GROUP");

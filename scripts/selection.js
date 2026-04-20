@@ -12,7 +12,7 @@ class Selection {
         for(let tile of this.tiles) {
             maker.allOverlapping(tile.startX, tile.startY, tile.endX, tile.endY, (t) => {
                 if(!this.includes(t)) {
-                    maker.addAction(new RemoveTileAction(t.ID));
+                    maker.addAction(new RemoveTileAction(t));
                 }
             })
         }
@@ -22,7 +22,7 @@ class Selection {
         for(let tile of this.tiles) {
             maker.getActiveLayer().forEach((t) => {
                 if(t != tile && t instanceof Tile && t.sameAs(tile)) {
-                    maker.addAction(new RemoveTileAction(t.ID));
+                    maker.addAction(new RemoveTileAction(t));
                 }
             })
         }

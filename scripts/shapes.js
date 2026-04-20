@@ -256,6 +256,7 @@ class Tile extends TileLike {
         this.endY = endY;
         this.rotation = rotation;
         this.color = color;
+        this.ignoreRotation = false;
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         throw new Error("Not implemented");
@@ -273,7 +274,7 @@ class Tile extends TileLike {
         this.color = color;
     }
     sameAs(otherTile) {
-        return this.constructor == otherTile.constructor && this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && this.rotation == otherTile.rotation;
+        return this.constructor == otherTile.constructor && this.startX == otherTile.startX && this.startY == otherTile.startY && this.endX == otherTile.endX && this.endY == otherTile.endY && (this.rotation == otherTile.rotation || this.ignoreRotation);
     }
     draw() {
         fill(this.color);
@@ -298,6 +299,7 @@ class RectTile extends Tile {
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
         this.name = "RectTile";
+        this.ignoreRotation = true;
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         rect(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
@@ -310,6 +312,7 @@ class RectTile extends Tile {
 class EllipseTile extends Tile {
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
+        this.ignoreRotation = true;
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         ellipse(layer.toSCF(sX), layer.toSCF(sY), layer.toSCC(eX), layer.toSCC(eY));
@@ -528,6 +531,22 @@ class BezierWedgeTile extends WedgeTile {
     getEndControlY() {
         return this.endControlY + this.endControlOffsetY;
     }
+    setBezier(index, x, y) {
+        if(index == 1) {
+            this.startControlX = x;
+            this.startControlY = y;
+        } else {
+            this.endControlX = x;
+            this.endControlY = y;
+        }
+    }
+    getBezier(index) {
+        if(index == 1) {
+            return {x:this.startControlX, y:this.startControlY};
+        } else {
+            return {x:this.endControlX, y:this.endControlY};
+        }
+    }
     setStartOffset(x, y) {
         this.startControlOffsetX = x;
         this.startControlOffsetY = y;
@@ -536,15 +555,25 @@ class BezierWedgeTile extends WedgeTile {
         this.endControlOffsetX = x;
         this.endControlOffsetY = y;
     }
+    getOffset(index) {
+        if(index == 1) {
+            return {x:this.startControlOffsetX, y:this.startControlOffsetY};
+        } else {
+            return {x:this.endControlOffsetX,y: this.endControlOffsetY};
+        }
+    }
+    resetOffsets() {
+        this.startControlOffsetX = 0;
+        this.startControlOffsetY = 0;
+        this.endControlOffsetX = 0;
+        this.endControlOffsetY = 0;
+    }
     applyOffset() {
         this.startControlX += this.startControlOffsetX;
         this.startControlY += this.startControlOffsetY;
         this.endControlX += this.endControlOffsetX;
         this.endControlY += this.endControlOffsetY;
-        this.startControlOffsetX = 0;
-        this.startControlOffsetY = 0;
-        this.endControlOffsetX = 0;
-        this.endControlOffsetY = 0;
+        this.resetOffsets();
     }
     move(offsetX, offsetY) {
         super.move(offsetX, offsetY);

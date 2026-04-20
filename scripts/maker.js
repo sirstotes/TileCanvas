@@ -38,9 +38,18 @@ class Maker {
         this.actions = [];
         this.currentAction = -1;
         this.newActions = [];
+        this.historySize = 20;
     }
     addAction(action) {
         this.newActions.push(action);
+    }
+    addActionInternal(action) {
+        this.actions.push(action);
+        if(this.currentAction < this.historySize) {
+            this.currentAction ++;
+        } else {
+            this.actions.shift();
+        }
     }
     submitActions() {
         if(this.newActions.length > 0) {
@@ -54,8 +63,7 @@ class Maker {
                 action = this.newActions[0];
             }
             console.log("Submitting: "+action.toString());
-            this.actions.push(action);
-            this.currentAction ++;
+            this.addActionInternal(action);
             this.newActions = [];
             return action.run();
         }

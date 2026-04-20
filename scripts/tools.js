@@ -65,7 +65,9 @@ class ShapeTool extends Tool {
         if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
             for(let tile of layer) {
                 if(tile instanceof Tile && tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
-                    tile.setColor(c);
+                    if(tile.color != c) {
+                        maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, c));
+                    }
                     return;
                 }
             }
@@ -407,15 +409,18 @@ class BezierTool extends Tool {
             cursor(ARROW);
         }
     }
-    update(maker) {
+    update(maker, mouseX, mouseY, mousePressed) {
         if(!this.moving) {
             let al = maker.getActiveLayer();
-            if(dist(getMouseX(), getMouseY(), al.toSCF(this.bezierTile.getStartControlX()), al.toSCF(this.bezierTile.getStartControlY())) < al.getGridSize()) {
+            if(dist(mouseX, mouseY, al.toSCF(this.bezierTile.getStartControlX()), al.toSCF(this.bezierTile.getStartControlY())) < al.getGridSize()) {
                 this.hovering = 1;
-            } else if(dist(getMouseX(), getMouseY(), al.toSCF(this.bezierTile.getEndControlX()), al.toSCF(this.bezierTile.getEndControlY())) < al.getGridSize()) {
+            } else if(dist(mouseX, mouseY, al.toSCF(this.bezierTile.getEndControlX()), al.toSCF(this.bezierTile.getEndControlY())) < al.getGridSize()) {
                 this.hovering = 2;
             } else {
                 this.hovering = 0;
+            }
+            if(mousePressed) {
+                this.moving = this.hovering;
             }
         }
     }
@@ -433,8 +438,12 @@ class BezierTool extends Tool {
     }
     onMouseReleased(maker) {
         if(this.moving) {
+            let q = this.bezierTile.getBezier(this.moving);
+            let t = this.bezierTile.getOffset(this.moving);
+            maker.addAction(new SetBezierAction(this.bezierTile, this.moving, q.x+t.x, q.y+t.y));
+            this.bezierTile.resetOffsets();
             this.moving = 0;
-            this.bezierTile.applyOffset();
+            maker.submitActions();
         }
     }
 }
