@@ -318,6 +318,7 @@ function loadFileText(text) {
         let currentTool = maker.currentTool;
         maker = Maker.fromBlocks(getIndentBlocks(text.split('\n')));
         maker.currentTool = currentTool;
+        resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
     } catch (error) {
         console.error(error);
         maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
@@ -384,10 +385,18 @@ function setup() {
             console.log("Loading...");
         }
         maker = Maker.fromBlocks(getIndentBlocks(autosave.split('\n')));
+        resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
+        console.log("Finished Loading");
     } catch (error) {
         console.error(error);
         maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
     }
+
+    let p = localStorage.getItem('palette');
+    if(p != undefined && p.length > 0) {
+        loadColors(p.split(","));
+    }
+
 
     c.parent('canvasContainer');
     canvas = document.getElementById("canvasContainer").firstChild;
@@ -416,8 +425,8 @@ function setup() {
 
     rectMode(CORNERS);
     ellipseMode(CORNERS);
-    loadColors(defaultPalette);
-    setColor(defaultPalette[0]);
+    // loadColors(defaultPalette);
+    // setColor(defaultPalette[0]);
     noSmooth();
 }
 
@@ -561,6 +570,7 @@ window.addEventListener('mousemove', (event) => {
 
 window.addEventListener('beforeunload',(event) =>{
     localStorage.setItem('autosave', maker.saveToString());
+    localStorage.setItem('palette', palette);
 });
 
 window.addEventListener('gesturestart', function(e) {

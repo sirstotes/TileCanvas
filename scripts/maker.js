@@ -181,7 +181,8 @@ class Maker {
         }
     }
     downloadCanvas(fileName) {
-        if(this.backgroundColor) {
+        if(this.backgroundColor != undefined) {
+            clear();
             background(this.backgroundColor);
         } else {
             clear();
