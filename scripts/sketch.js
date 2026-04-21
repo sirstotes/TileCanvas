@@ -327,7 +327,7 @@ function loadFileText(text) {
 function saveProject() {
     let c = maker.saveToString();
     console.log(c);
-    saveStrings(c.split('\n'), document.getElementById("fileName").value, ".tlc");
+    saveStrings(c.split('\n'), document.getElementById("fileName").value, "tlc");
 }
 
 function downloadCanvas() {
