@@ -13,11 +13,14 @@ class Maker {
         EYEDROP: new ColorSelectTool(),
         BEZIER: new BezierTool()
     }
-    constructor(width, height, resolution) {
+    constructor(width, height, resolution, layers, backgroundColor) {
         this.width = width;
         this.height = height;
         this.resolution = resolution;
-        this.layers = [new Layer(ID.getNext(), this)];
+        this.layers = [];
+        for(let i = 0; i < layers; i ++) {
+            this.layers.push(new Layer(ID.getNext(), this));
+        }
         this.shouldDrawGrid = true;
         this.currentTool = Maker.TOOLS.RECT;
         this.currentTool.onEnable(this);
@@ -34,7 +37,7 @@ class Maker {
         this.pMousePressed = false;
         this.pMouseX = 0;
         this.pMouseY = 0;
-        this.backgroundColor = '#FFFFFF';
+        this.backgroundColor = backgroundColor;
         this.actions = [];
         this.currentAction = -1;
         this.newActions = [];
@@ -184,7 +187,7 @@ class Maker {
             clear();
         }
         this.render(this.displayCanvas);
-        saveCanvas(fileName);
+        saveCanvas(fileName+".png");
     }
     setRotation(rotation) {
         this.currentRotation = rotation;
@@ -199,10 +202,7 @@ class Maker {
     }
     render() {
         for (let layer of this.layers) {
-            for(let tile of layer) {
-                noStroke();
-                tile.draw();
-            }
+            layer.render();
         }
     }
     drawGrid() {
@@ -225,6 +225,7 @@ class Maker {
         }
     }
     clear() {
+        console.log("RESET");
         ID.reset();
         this.actions = [];
         this.newActions = [];
@@ -386,5 +387,20 @@ class Maker {
             }
         }
         maker.submitActions();
+    }
+    saveToString() {
+        let str = `${this.width} ${this.height} ${this.backgroundColor}`;
+        for(let layer of this.layers) {
+            str += '\n' + layer.saveToString(0);
+        }
+        return str;
+    }
+    static fromBlocks(blocks) {
+        let options = blocks[0].head.split(' ');
+        let newMaker = new Maker(int(options[0]), int(options[1]), initialResolution, 0, options[2]);
+        for(let i = 1; i < blocks.length; i ++) {
+            newMaker.layers.push(Layer.fromBlock(blocks[i], newMaker));
+        }
+        return newMaker;
     }
 }

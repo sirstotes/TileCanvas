@@ -42,7 +42,7 @@
       <div id="centerArea">
         <div style="pointer-events: auto;">
           <div id="menu" class="sideMenu" style="display: none;">
-            <h3>Tiles</h3>
+            <h3>Tile Canvas</h3>
             <p>Welcome. This is a project I have worked on instead of studying and doing homework. I hope you enjoy it!</p>
             <span>
               Canvas Size: 
@@ -62,8 +62,10 @@
               <input class="inlineInput" id="canvasBG" type="text" value="#FFFFFF">
               <button class="inlineInput" onclick="setBackgroundColor(document.getElementById('canvasBG').value)">Apply</button>
             </span>
-            <button onclick="clearCanvas()">Clear Canvas</button>
-            <span><input class="inlineInput" id="fileName" type="text" value="tiles.png"> <button class="inlineInput" onclick="downloadCanvas()">Download</button></span>
+            <span><button class="inlineInput" onclick="newProject();">New Project</button><button class="inlineInput" onclick="loadProject();">Load Project</button></span>
+            <span><input class="inlineInput" id="fileName" type="text" value="filename">
+              <button onclick="downloadCanvas()">Save as image</button>
+              <button onclick="saveProject();">Save as file</button></span>
           </div>
           <div style="background:none;pointer-events: none;flex-grow:1;"></div>
           <div id="toolSettings" class="sideMenu" style="display: none;">

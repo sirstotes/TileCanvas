@@ -19,12 +19,34 @@ class IDObject {
     }
 }
 
+let TileTypeReference = {};
+
 class Layer extends IDObject {
     constructor(id, tileCanvas) {
         super(id);
         this.children = [];
         this.gridScale = 1;
         this.canvas = tileCanvas;
+    }
+    static fromBlock(block, parent) {
+        let newLayer = new Layer(ID.getNext(), parent);
+        for(let childBlock of block.children) {
+            newLayer.addChild(TileTypeReference[childBlock.head.split(" ")[0]].fromBlock(childBlock, newLayer));
+        }
+        return newLayer;
+    }
+    saveToString(indent) {
+        let str = ('\t'.repeat(indent)) + 'Layer';
+        for(let child of this.children) {
+            str += "\n" + child.saveToString(indent + 1);
+        }
+        return str;
+    }
+    render() {
+        for(let child of this.children) {
+            noStroke();
+            child.draw();
+        }
     }
     toLC(x) {//To Layer Coordinate (From Screen)
         return  floor(x/this.getGridSize())
@@ -77,6 +99,9 @@ class Layer extends IDObject {
 }
 
 class TileLike extends IDObject {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(id, parent) {
         super(id);
         this.parent = parent;
@@ -122,9 +147,26 @@ class TileLike extends IDObject {
 }
 
 class Group extends TileLike {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, parent) {
         super(ID, parent);
         this.children = [];
+    }
+    static fromBlock(block, parent) {
+        let newGroup = new Group(ID.getNext(), parent);
+        for(let childBlock of block.children) {
+            newGroup.addChild(TileTypeReference[childBlock.head.split(" ")[0]].fromBlock(childBlock, newGroup));
+        }
+        return newGroup;
+    }
+    saveToString(indent) {
+        let str = ('\t'.repeat(indent)) + 'Group';
+        for(let child of this.children) {
+            str += "\n" + child.saveToString(indent + 1);
+        }
+        return str;
     }
     remove(index) {
         if (index >= 0 && index < this.children.length) {
@@ -248,6 +290,9 @@ class Group extends TileLike {
 }
 
 class Tile extends TileLike {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, parent);
         this.startX = startX;
@@ -257,6 +302,13 @@ class Tile extends TileLike {
         this.rotation = rotation;
         this.color = color;
         this.ignoreRotation = false;
+    }
+    static fromBlock(block, parent) {
+        let options = block.head.split(" ");
+        return new TileTypeReference[options[0]](ID.getNext(), int(options[1]), int(options[2]), int(options[3]), int(options[4]), int(options[5]), options[6], parent);
+    }
+    saveToString(indent) {
+        return ('\t'.repeat(indent)) + `${this.constructor.name} ${this.startX} ${this.startY} ${this.endX} ${this.endY} ${this.ignoreRotation ? 0 : this.rotation} ${this.color}`;
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         throw new Error("Not implemented");
@@ -296,6 +348,9 @@ class Tile extends TileLike {
 }
 
 class RectTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
         this.name = "RectTile";
@@ -310,6 +365,9 @@ class RectTile extends Tile {
 }
 
 class EllipseTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
         this.ignoreRotation = true;
@@ -327,6 +385,9 @@ class EllipseTile extends Tile {
 }
 
 class QuadrantTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
@@ -404,6 +465,9 @@ class QuadrantTile extends Tile {
 }
 
 class InverseQuadrantTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
@@ -473,6 +537,9 @@ class InverseQuadrantTile extends Tile {
 }
 
 class WedgeTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
     }
@@ -507,6 +574,9 @@ class WedgeTile extends Tile {
 }
 
 class BezierWedgeTile extends WedgeTile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
         let c = BezierWedgeTile.getStartControls(startX, startY, endX, endY, rotation);
@@ -518,6 +588,18 @@ class BezierWedgeTile extends WedgeTile {
         this.startControlOffsetY = 0;
         this.endControlOffsetX = 0;
         this.endControlOffsetY = 0;
+    }
+    static fromBlock(block, parent) {
+        let newBez = super.fromBlock(block, parent);
+        let options = block.head.split(" ");
+        newBez.startControlX = float(options[7]);
+        newBez.startControlY = float(options[8]);
+        newBez.endControlX = float(options[9]);
+        newBez.endControlY = float(options[10]);
+        return newBez;
+    }
+    saveToString(indent) {
+        return super.saveToString(indent) + ` ${this.startControlX} ${this.startControlY} ${this.endControlX} ${this.endControlY}`;
     }
     getStartControlX() {
         return this.startControlX + this.startControlOffsetX;

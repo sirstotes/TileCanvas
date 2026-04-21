@@ -160,6 +160,7 @@ main {
     padding-top: 0;
     padding-bottom: 0;
     text-align: center;
+    flex-grow: 1;
 }
 #canvasContainer {
     padding: 10px;

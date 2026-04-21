@@ -185,10 +185,6 @@ function toggleGrid(button) {
     button.classList = maker.shouldDrawGrid ? ["highlighted"] : []
 }
 
-function downloadCanvas() {
-    maker.downloadCanvas(document.getElementById("fileName").value);
-}
-
 function setCanvasSize(w, h) {
     maker.width = w;
     maker.height = h;
@@ -285,12 +281,114 @@ function continuousPress(button, callback) {
     });
 }
 
+function newProject() {
+    ID.reset();
+    let currentTool = maker.currentTool;
+    maker = new Maker(document.getElementById("canvasW").value, document.getElementById("canvasH").value, document.getElementById("tileResolution").value, 1, document.getElementById("canvasBG").value);
+    maker.currentTool = currentTool;
+}
+
+function loadProject() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.tlc';
+
+    input.onchange = e => { 
+        // getting a hold of the file reference
+        var file = e.target.files[0]; 
+
+        // setting up the reader
+        var reader = new FileReader();
+        reader.readAsText(file,'UTF-8');
+
+        // here we tell the reader what to do when it's done reading...
+        reader.onload = readerEvent => {
+            var content = readerEvent.target.result; // this is the content!
+            loadFileText(content);
+        }
+    }
+
+    input.click();
+}
+
+function loadFileText(text) {
+    try {
+        console.log("Loading text:");
+        console.log(text);
+        let currentTool = maker.currentTool;
+        maker = Maker.fromBlocks(getIndentBlocks(text.split('\n')));
+        maker.currentTool = currentTool;
+    } catch (error) {
+        console.error(error);
+        maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
+    }
+}
+
+function saveProject() {
+    let c = maker.saveToString();
+    console.log(c);
+    saveStrings(c.split('\n'), document.getElementById("fileName").value, ".tlc");
+}
+
+function downloadCanvas() {
+    maker.downloadCanvas(document.getElementById("fileName").value);
+}
+
+function getIndentBlocks(lines) {
+    if(lines.length == 0) {
+        return null;
+    }
+    let blocks = [];
+    let blockIndex = -1;
+    let nextLines = [];
+    for(let line of lines) {
+        if(numberOfTabs(line) == 0) {
+            if(blockIndex < blocks.length && nextLines.length > 0) {
+                blocks[blockIndex].children = getIndentBlocks(nextLines);
+            }
+            blocks.push({head: line, children: []});
+            blockIndex ++;
+        } else {
+            nextLines.push(line.slice(1));
+        }
+    }
+    if(blockIndex < blocks.length && nextLines.length > 0) {
+        blocks[blockIndex].children = getIndentBlocks(nextLines);
+    }
+    return blocks;
+}
+
+function numberOfTabs(text) {
+  var count = 0;
+  var index = 0;
+  while (text.charAt(index++) === "\t") {
+    count++;
+  }
+  return count;
+}
+
 let canvas;
+let initialResolution;
 function setup() {
     let initialSize = document.getElementById("canvasW").value;
-    let initialResolution = document.getElementById("tileResolution").value;
+    initialResolution = document.getElementById("tileResolution").value;
     let c = createCanvas(initialSize*initialResolution, initialSize*initialResolution);
-    maker = new Maker(initialSize, initialSize, initialResolution);
+
+    try {
+        let autosave = localStorage.getItem('autosave');
+        if(autosave == undefined || autosave.length == 0) {
+            throw new Error("No autosave detected. Creating new canvas.");
+        } else {
+            console.log("Located autosave: ");
+            console.log(autosave);
+            console.log("Loading...");
+        }
+        maker = Maker.fromBlocks(getIndentBlocks(autosave.split('\n')));
+    } catch (error) {
+        console.error(error);
+        maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
+    }
+
     c.parent('canvasContainer');
     canvas = document.getElementById("canvasContainer").firstChild;
     for (let element of document.getElementsByClassName("p5Canvas")) {
@@ -427,12 +525,13 @@ function keyReleased() {
 function mousePressed(event) {
     if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
         clickingOnCanvas = true;
-        document.getElementById("canvasContainer").style.backgroundColor = "var(--highlight-2)";
+        document.getElementById("canvasContainer").style.backgroundColor = "var(--white)";
+    } else {
+        document.getElementById("canvasContainer").style.backgroundColor = "var(--gray)";
     }
 }
 function mouseReleased(event) {
     clickingOnCanvas = false;
-        document.getElementById("canvasContainer").style.backgroundColor = "var(--gray)";
 }
 function mouseWheel(event) {
     if (event.delta > 0) {
@@ -453,7 +552,6 @@ function touchEnded(event) {
     document.getElementById("canvasContainer").style.backgroundColor = "var(--gray)";
 }
 
-
 let globalMouse = { x: undefined, y: undefined };
 let globalMouse2 = { x: undefined, y: undefined };
 
@@ -461,7 +559,11 @@ window.addEventListener('mousemove', (event) => {
     globalMouse = { x: event.clientX, y: event.clientY };
 });
 
-document.addEventListener('gesturestart', function(e) {
+window.addEventListener('beforeunload',(event) =>{
+    localStorage.setItem('autosave', maker.saveToString());
+});
+
+window.addEventListener('gesturestart', function(e) {
   e.preventDefault();
 });
 
