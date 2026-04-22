@@ -103,7 +103,8 @@ class RemoveTileAction extends Action {
     constructor(tile) {
         super("REMOVE");
         this.tileID = tile.ID;
-        this.layerID = tile.parent.ID;
+        this.parentID = tile.parent.ID;
+        this.positionInParent = tile.parent.indexOf(tile);
     }
     toString() {
         return `${this.name} ${this.tileID}`;
@@ -114,9 +115,9 @@ class RemoveTileAction extends Action {
         });
     }
     undo() {
-        ID.withObject(this.layerID, (parent) => {
+        ID.withObject(this.parentID, (parent) => {
             ID.withObject(this.tileID, (tile) => {
-                parent.addChild(tile);
+                parent.addChild(tile, this.positionInParent);
             });
         });
     }

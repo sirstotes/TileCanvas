@@ -286,6 +286,7 @@ function newProject() {
     let currentTool = maker.currentTool;
     maker = new Maker(document.getElementById("canvasW").value, document.getElementById("canvasH").value, document.getElementById("tileResolution").value, 1, document.getElementById("canvasBG").value);
     maker.currentTool = currentTool;
+    resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
 }
 
 function loadProject() {
@@ -395,6 +396,8 @@ function setup() {
     let p = localStorage.getItem('palette');
     if(p != undefined && p.length > 0) {
         loadColors(p.split(","));
+    } else {
+        loadColors([...defaultPalette]);
     }
 
 

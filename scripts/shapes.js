@@ -1,5 +1,8 @@
+function ellipseDist(centerX, centerY, radiusX, radiusY, otherX, otherY) {
+    return pow(otherX - centerX, 2) / pow(radiusX, 2) + pow(otherY - centerY, 2) / pow(radiusY, 2);
+}
 function inEllipse(centerX, centerY, radiusX, radiusY, otherX, otherY) {
-    return pow(otherX - centerX, 2) / pow(radiusX, 2) + pow(otherY - centerY, 2) / pow(radiusY, 2) <= 1;
+    return ellipseDist(centerX, centerY, radiusX, radiusY, otherX, otherY) <= 1;
 }
 function inTriangle(x1, y1, x2, y2, x3, y3, otherX, otherY) {
     let areaOrig = abs((x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2))/2.0);
@@ -10,6 +13,38 @@ function inTriangle(x1, y1, x2, y2, x3, y3, otherX, otherY) {
 }
 function rectsOverlap(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
     return ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1;
+}
+function pDistance(x, y, x1, y1, x2, y2) {
+
+  var A = x - x1;
+  var B = y - y1;
+  var C = x2 - x1;
+  var D = y2 - y1;
+
+  var dot = A * C + B * D;
+  var len_sq = C * C + D * D;
+  var param = -1;
+  if (len_sq != 0) //in case of 0 length line
+      param = dot / len_sq;
+
+  var xx, yy;
+
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  }
+  else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  }
+  else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  var dx = x - xx;
+  var dy = y - yy;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 class IDObject {
@@ -49,6 +84,9 @@ class Layer extends IDObject {
         }
     }
     toLC(x) {//To Layer Coordinate (From Screen)
+        return  round(x/this.getGridSize())
+    }
+    toLCF(x) {//To Layer Coordinate (From Screen)
         return  floor(x/this.getGridSize())
     }
     toSC(x) {//To Screen Coordinate
@@ -66,12 +104,22 @@ class Layer extends IDObject {
     size() {
         return this.children.length;
     }
+    indexOf(child) {
+        for(let i = 0; i < this.children.length; i ++) {
+            if(this.children[i] == child) {
+                return i;
+            }
+        }
+    }
     getChild(index) {
         return this.children[index];
     }
     forEach(callback) {
         for(let i = this.children.length - 1; i >= 0; i --) {
-            callback(this.children[i]);
+            let end = callback(this.children[i]);
+            if(end) {
+                return;
+            }
         }
     }
     remove(index) {
@@ -89,8 +137,12 @@ class Layer extends IDObject {
         }
         return null;
     }
-    addChild(child) {
-        this.children.push(child);
+    addChild(child, index) {
+        if(index == undefined) {
+            this.children.push(child);
+        } else {
+            this.children.splice(index, 0, child);
+        }
         child.parent = this;
     }
     [Symbol.iterator]() {
@@ -433,7 +485,6 @@ class QuadrantTile extends Tile {
                 line(sX, eY, eX, eY);
                 break;
         }
-        
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
         let w = eX - sX + 1;
@@ -718,5 +769,88 @@ class BezierWedgeTile extends WedgeTile {
         strokeWeight(10);
         point(this.getLayer().toSC(this.getStartControlX()+offsetX), this.getLayer().toSC(this.getStartControlY()+offsetY));
         point(this.getLayer().toSC(this.getEndControlX()+offsetX), this.getLayer().toSC(this.getEndControlY()+offsetY));
+    }
+}
+
+class LineTile extends Tile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
+        this.strokeWeight = 5;
+        this.ignoreRotation = true;
+    }
+    static drawRaw(sX, sY, eX, eY, r, layer) {
+        line(layer.toSC(sX), layer.toSC(sY), layer.toSC(eX), layer.toSC(eY));
+    }
+    static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
+        let d = pDistance(mouseX, mouseY, layer.toSCF(sX), layer.toSCF(sY), layer.toSCF(eX), layer.toSCF(eY));
+        return d < 10;
+    }
+    static fromBlock(block, parent) {
+        let options = block.head.split(" ");
+        return new TileTypeReference[options[0]](ID.getNext(), float(options[1]), float(options[2]), float(options[3]), float(options[4]), int(options[5]), options[6], parent);
+    }
+    draw() {
+        stroke(this.color);
+        strokeWeight(this.strokeWeight);
+        LineTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
+    }
+    drawOutline(offsetX, offsetY) {
+        strokeWeight(this.strokeWeight*2);
+        LineTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
+    }
+}
+
+class CurveTile extends QuadrantTile {
+    static {
+        TileTypeReference[this.name] = this;
+    }
+    constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
+        super(ID, startX, startY, endX, endY, rotation, color, parent);
+        this.strokeWeight = 5;
+    }
+    draw() {
+        noFill();
+        stroke(this.color);
+        strokeWeight(this.strokeWeight);
+        QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
+    }
+    drawOutline(offsetX, offsetY) {
+        strokeWeight(this.strokeWeight*2);
+        QuadrantTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
+    }
+    static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
+        let w = eX - sX + 1;
+        let h = eY - sY + 1;
+        let eSX = sX;
+        let eSY = sY;
+        let eEX = eX;
+        let eEY = eY;
+        switch(int(r)) {
+            case 0:
+                eSX -= w;
+                eSY -= h;
+                break;
+            case 1:
+                eEX += w;
+                eSY -= h;
+                break;
+            case 2:
+                eEX += w;
+                eEY += h;
+                break;
+            case 3:
+                eSX -= w;
+                eEY += h;
+                break;
+        }
+        let centerX = layer.toSC(eSX + (eEX - eSX) / 2);
+        let centerY = layer.toSC(eSY + (eEY - eSY) / 2);
+        let radiusX = (layer.toSCF(eSX) - layer.toSCC(eEX)) / 2;
+        let radiusY = (layer.toSCF(eSY) - layer.toSCC(eEY)) / 2;
+        let eD = ellipseDist(centerX, centerY, radiusX, radiusY, mouseX, mouseY);
+        return RectTile.checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) && eD > 0.9 && eD < 1.2;
     }
 }

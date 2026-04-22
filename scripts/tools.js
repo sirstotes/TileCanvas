@@ -62,15 +62,20 @@ class ShapeTool extends Tool {
         this.maker = undefined;
     }
     place(maker, sX, sY, eX, eY, r, c, layer) {
+        let cancelPlacement = false;
         if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
-            for(let tile of layer) {
-                if(tile instanceof Tile && tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
-                    if(tile.color != c) {
-                        maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, c));
+            layer.forEach((tile) => {
+                if(tile.overlapsWith(sX, sY, eX, eY)) {
+                    if(tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
+                        if(tile.color != c) {
+                            maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, c));
+                        }
+                        cancelPlacement = true;
+                    } else {
+                        return true;
                     }
-                    return;
                 }
-            }
+            });
         } else if (Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.ALL) {
             layer.forEach((tile) => {
                 if(tile.overlapsWith(sX, sY, eX, eY)) {
@@ -78,13 +83,15 @@ class ShapeTool extends Tool {
                 }
             });
         }
-        maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+        if(!cancelPlacement) {
+            maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+        }
     }
     onEnable(maker) {
         this.maker = maker;
     }
     draw(maker) {
-        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && (window.mobileAndTabletCheck || !maker.startEndEqual())) {
+        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && (!window.mobileAndTabletCheck() || clickingOnCanvas)) {
             strokeWeight(0);
             fill(maker.getColor());
             this.shapeType.drawRaw(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getActiveLayer());
@@ -110,8 +117,8 @@ class ShapeTool extends Tool {
     }
     update(maker, mouseX, mouseY, mousePressed) {
         if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.DRAG) {
-            let cmx = maker.getActiveLayer().toSC(maker.getActiveLayer().toLC(maker.currentStartMouseX));
-            let cmy = maker.getActiveLayer().toSC(maker.getActiveLayer().toLC(maker.currentStartMouseY));
+            let cmx = maker.getActiveLayer().toSC(maker.getActiveLayer().toLCF(maker.currentStartMouseX));
+            let cmy = maker.getActiveLayer().toSC(maker.getActiveLayer().toLCF(maker.currentStartMouseY));
             if (mouseX > cmx && mouseY > cmy) {
                 maker.setRotation(2);
             } else if (mouseX < cmx && mouseY > cmy) {
@@ -141,34 +148,125 @@ class RectTool extends ShapeTool {
         }
     }
 }
-
-class EllipseTool extends ShapeTool {
-    constructor() {
-        super("ELLIPSE", EllipseTile);
-    }
-}
-
-class QuadrantTool extends ShapeTool {
-    constructor() {
-        super("QUADRANT", QuadrantTile);
-    }
-}
-
-class InverseQuadrantTool extends ShapeTool {
-    constructor() {
-        super("INVERSE_QUADRANT", InverseQuadrantTile);
-    }
-}
-
 class WedgeTool extends ShapeTool {
     constructor() {
         super("WEDGE", WedgeTile);
     }
+    //TODO split up place() method
+}
+class LineTool extends ShapeTool {
+    constructor() {
+        super("LINE", LineTile);
+    }
+    place(maker, sX, sY, eX, eY, r, c, layer) {
+        //TODO: redo this maybe?
+        let cancelPlacement = false;
+        if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
+            layer.forEach((tile) => {
+                if(tile.overlapsWith(sX, sY, eX, eY) && tile instanceof Tile) {
+                    if(tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
+                        if(tile.color != c) {
+                            maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, c));
+                        }
+                        cancelPlacement = true;
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        } else if (Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.ALL) {
+            layer.forEach((tile) => {
+                if(tile.overlapsWith(sX, sY, eX, eY)) {
+                    maker.addAction(new RemoveTileAction(tile));
+                }
+            });
+        }
+        if(!cancelPlacement) {
+            maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+        }
+    }
+    getStartX() {
+        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseX) - 0.5;
+    }
+    getStartY() {
+        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseY) - 0.5;
+    }
+    getEndX() {
+        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseX) - 0.5;
+    }
+    getEndY() {
+        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseY) - 0.5;
+    }
+    draw(maker) {
+        if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
+            strokeWeight(5);
+            stroke(maker.getColor());
+            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getActiveLayer());
+        }
+    }
+    onMousePressed(maker) {
+        
+    }
+    onMouseReleased(maker) {
+        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+        maker.submitActions();
+    }
+    onTileChange(maker) {
+        
+    }
+    update(maker, mouseX, mouseY, mousePressed) {
+
+    }
 }
 
-class BezierWedgeTool extends ShapeTool {
+class CurveTool extends ShapeTool {
     constructor() {
-        super("BEZIER_WEDGE", BezierWedgeTile);
+        super("CURVE", CurveTile);
+    }
+    place(maker, sX, sY, eX, eY, r, c, layer) {
+        //TODO: redo this maybe?
+        let cancelPlacement = false;
+        if(Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.IDENTICAL) {
+            layer.forEach((tile) => {
+                if(tile.overlapsWith(sX, sY, eX, eY) && tile instanceof Tile) {
+                    if(tile.sameAs({startX : sX, startY : sY, endX : eX, endY : eY, rotation : r, constructor: this.shapeType})) {
+                        if(tile.color != c) {
+                            maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, c));
+                        }
+                        cancelPlacement = true;
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        } else if (Tool.REPLACEMENT_MODE == Tool.REPLACEMENT_MODE_OPTIONS.ALL) {
+            layer.forEach((tile) => {
+                if(tile.overlapsWith(sX, sY, eX, eY)) {
+                    maker.addAction(new RemoveTileAction(tile));
+                }
+            });
+        }
+        if(!cancelPlacement) {
+            maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+        }
+    }
+    draw(maker) {
+        if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
+            noFill();
+            strokeWeight(5);
+            stroke(maker.getColor());
+            this.shapeType.drawRaw(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getActiveLayer());
+        }
+    }
+    onMousePressed(maker) {
+        
+    }
+    onMouseReleased(maker) {
+        this.place(maker, maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+        maker.submitActions();
+    }
+    onTileChange(maker) {
+        
     }
 }
 

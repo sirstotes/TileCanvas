@@ -2,16 +2,18 @@ class Maker {
     static TOOLS = {
         CROP: new CropTool(),
         RECT: new RectTool(),
-        ELLIPSE: new EllipseTool(),
-        QUADRANT: new QuadrantTool(),
-        INVERSE_QUADRANT: new InverseQuadrantTool(),
+        ELLIPSE: new ShapeTool("ELLIPSE", EllipseTile),
+        QUADRANT: new ShapeTool("QUADRANT", QuadrantTile),
+        INVERSE_QUADRANT: new ShapeTool("INVERSE_QUADRANT", InverseQuadrantTile),
         WEDGE: new WedgeTool(),
-        BEZIER_WEDGE: new BezierWedgeTool(),
+        BEZIER_WEDGE: new ShapeTool("BEZIER_WEDGE", BezierWedgeTile),
         ERASE: new EraseTool(),
         PAINT: new PaintTool(),
         SELECT: new SelectTool(),
         EYEDROP: new ColorSelectTool(),
-        BEZIER: new BezierTool()
+        BEZIER: new BezierTool(),
+        LINE: new LineTool(),
+        CURVE: new CurveTool()
     }
     constructor(width, height, resolution, layers, backgroundColor) {
         this.width = width;
@@ -115,7 +117,7 @@ class Maker {
             }
             this.currentEndMouseX = round(mouseX);
             this.currentEndMouseY = round(mouseY);
-            if(this.getActiveLayer().toLC(mouseX) != this.getActiveLayer().toLC(this.pMouseX) || this.getActiveLayer().toLC(mouseY) != this.getActiveLayer().toLC(this.pMouseY)) {
+            if(this.getActiveLayer().toLCF(mouseX) != this.getActiveLayer().toLCF(this.pMouseX) || this.getActiveLayer().toLCF(mouseY) != this.getActiveLayer().toLCF(this.pMouseY)) {
                 this.currentTool.onTileChange(this);
             }
         }
@@ -125,28 +127,28 @@ class Maker {
         this.pMousePressed = mousePressed;
     }
     getStartX() {
-        return this.getActiveLayer().toLC(min(this.currentStartMouseX, this.currentEndMouseX));
+        return this.getActiveLayer().toLCF(min(this.currentStartMouseX, this.currentEndMouseX));
     }
     getStartY() {
-        return this.getActiveLayer().toLC(min(this.currentStartMouseY, this.currentEndMouseY));
+        return this.getActiveLayer().toLCF(min(this.currentStartMouseY, this.currentEndMouseY));
     }
     getEndX() {
-        return this.getActiveLayer().toLC(max(this.currentStartMouseX, this.currentEndMouseX));
+        return this.getActiveLayer().toLCF(max(this.currentStartMouseX, this.currentEndMouseX));
     }
     getEndY() {
-        return this.getActiveLayer().toLC(max(this.currentStartMouseY, this.currentEndMouseY));
+        return this.getActiveLayer().toLCF(max(this.currentStartMouseY, this.currentEndMouseY));
     }
     getCurrentX() {
-        return this.getActiveLayer().toLC(this.currentEndMouseX);
+        return this.getActiveLayer().toLCF(this.currentEndMouseX);
     }
     getCurrentY() {
-        return this.getActiveLayer().toLC(this.currentEndMouseY);
+        return this.getActiveLayer().toLCF(this.currentEndMouseY);
     }
     getXOffset() {
-        return this.getActiveLayer().toLC(this.currentEndMouseX - this.currentStartMouseX);
+        return this.getActiveLayer().toLCF(this.currentEndMouseX - this.currentStartMouseX);
     }
     getYOffset() {
-        return this.getActiveLayer().toLC(this.currentEndMouseY - this.currentStartMouseY);
+        return this.getActiveLayer().toLCF(this.currentEndMouseY - this.currentStartMouseY);
     }
     startEndEqual() {
         return this.getStartX() == this.getEndX() && this.getStartY() == this.getEndY();
