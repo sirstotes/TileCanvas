@@ -1,4 +1,4 @@
-class Maker {
+class Maker {//TODO split into maker and canvas
     static TOOLS = {
         CROP: new CropTool(),
         RECT: new RectTool(),
@@ -81,7 +81,7 @@ class Maker {
         }
         this.render(this.displayCanvas);
         if(this.shouldDrawGrid) {
-            this.drawGrid();
+            this.getActiveLayer().drawGrid();
         }
         if(this.hasSelection()) {
             this.selection.drawOutlines();
@@ -208,25 +208,6 @@ class Maker {
             layer.render();
         }
     }
-    drawGrid() {
-        strokeWeight(1);
-        for (let x = 0; x < width; x += this.getActiveLayer().getGridSize()) {
-            if(x == width/2) {
-                stroke(100);
-            } else {
-                stroke(200);
-            }
-            line(x, 0, x, height);
-        }
-        for (let y = 0; y < height; y += this.getActiveLayer().getGridSize()) {
-            if(y == height/2) {
-                stroke(100);
-            } else {
-                stroke(200);
-            }
-            line(0, y, width, y);
-        }
-    }
     clear() {
         console.log("RESET");
         ID.reset();
@@ -247,14 +228,21 @@ class Maker {
     }
 
     firstColliding(x, y, callback) {
-        for (let i = this.layers.length - 1; i >= 0; i--) {
-            let layer = this.layers[i];
-            for(let j = layer.size() - 1; j >= 0; j--) {
-                let shape = layer.getChild(j);
-                if(shape.collidesWith(x, y)) {
-                    callback(shape);
-                    return;
-                }
+        // for (let i = this.layers.length - 1; i >= 0; i--) {
+        //     let layer = this.layers[i];
+        //     for(let j = layer.size() - 1; j >= 0; j--) {
+        //         let shape = layer.getChild(j);
+        //         if(shape.collidesWith(x, y)) {
+        //             callback(shape);
+        //             return;
+        //         }
+        //     }
+        // }
+        for(let j = this.getActiveLayer().size() - 1; j >= 0; j--) {
+            let shape = this.getActiveLayer().getChild(j);
+            if(shape.collidesWith(x, y)) {
+                callback(shape);
+                return;
             }
         }
     }
@@ -391,6 +379,31 @@ class Maker {
         }
         maker.submitActions();
     }
+    moveLayerUp(layer) {
+        let cl = this.layers[this.currentLayer];
+        let index = this.layers.indexOf(layer);
+        if(index != -1) {
+            this.layers.splice(index, 1);
+            this.layers.splice(index-1, 0, layer);
+            this.currentLayer = this.layers.indexOf(cl);
+        }
+    }
+    moveLayerDown(layer) {
+        let cl = this.layers[this.currentLayer];
+        let index = this.layers.indexOf(layer);
+        if(index != -1) {
+            this.layers.splice(index, 1);
+            this.layers.splice(index+1, 0, layer);
+            this.currentLayer = this.layers.indexOf(cl);
+        }
+    }
+    removeLayer(layer) {
+        let index = this.layers.indexOf(layer);
+        if(index != -1) {
+            this.layers.splice(index, 1);
+            this.currentLayer = min(this.currentLayer, this.layers.length - 1)
+        }
+    }
     saveToString() {
         let str = `${this.width} ${this.height} ${this.backgroundColor}`;
         for(let layer of this.layers) {
@@ -399,10 +412,13 @@ class Maker {
         return str;
     }
     static fromBlocks(blocks) {
+        //console.log(blocks);
         let options = blocks[0].head.split(' ');
         let newMaker = new Maker(int(options[0]), int(options[1]), initialResolution, 0, options[2]);
         for(let i = 1; i < blocks.length; i ++) {
-            newMaker.layers.push(Layer.fromBlock(blocks[i], newMaker));
+            if(blocks[i].head.startsWith("Layer")) {
+                newMaker.layers.push(Layer.fromBlock(blocks[i], newMaker));
+            }
         }
         return newMaker;
     }

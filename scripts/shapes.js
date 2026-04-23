@@ -56,47 +56,92 @@ class IDObject {
 
 let TileTypeReference = {};
 
+function getOptions(str) {
+    let options = [];
+    let option = '';
+    let inQuotes = false;
+    let quotes = '';
+    for(let char of str) {
+        if(inQuotes) {
+            if(char == quotes) {
+                inQuotes = false;
+            } else {
+                option += char;
+            }
+        } else {
+            if(char == ' ') {
+                if(option.length > 0) {
+                    options.push(option);
+                    option = '';
+                }
+            } else if (char == '"' || char == "'") {
+                inQuotes = true;
+                quotes = char;
+            } else {
+                option += char;
+            }
+        }
+    }
+    if(option.length > 0) {
+        options.push(option);
+    }
+    return options;
+}
+
 class Layer extends IDObject {
     constructor(id, tileCanvas) {
         super(id);
+        this.name = "Layer "+tileCanvas.layers.length;
         this.children = [];
         this.gridScale = 1;
         this.canvas = tileCanvas;
+        this.hidden = false;
+        this.offset = false;
     }
     static fromBlock(block, parent) {
+        let options = getOptions(block.head);
         let newLayer = new Layer(ID.getNext(), parent);
+        newLayer.name = options[1];
+        newLayer.gridScale = int(options[2]);
+        newLayer.hidden = (options[3].toLowerCase() === "true");
+        newLayer.offset = (options[4].toLowerCase() === "true");
         for(let childBlock of block.children) {
             newLayer.addChild(TileTypeReference[childBlock.head.split(" ")[0]].fromBlock(childBlock, newLayer));
         }
         return newLayer;
     }
     saveToString(indent) {
-        let str = ('\t'.repeat(indent)) + 'Layer';
+        let str = ('\t'.repeat(indent)) + `Layer '${this.name}' ${this.gridScale} ${this.hidden} ${this.offset}`;
         for(let child of this.children) {
             str += "\n" + child.saveToString(indent + 1);
         }
         return str;
     }
     render() {
-        for(let child of this.children) {
-            noStroke();
-            child.draw();
+        if(!this.hidden) {
+            for(let child of this.children) {
+                noStroke();
+                child.draw();
+            }
         }
     }
+    getOffset() {
+        return this.offset ? 0.5 : 0;
+    }
     toLC(x) {//To Layer Coordinate (From Screen)
-        return  round(x/this.getGridSize())
+        return round(x/this.getGridSize()) + this.getOffset();
     }
     toLCF(x) {//To Layer Coordinate (From Screen)
-        return  floor(x/this.getGridSize())
+        return floor(x/this.getGridSize()) + this.getOffset();
     }
     toSC(x) {//To Screen Coordinate
-        return (x + 0.5) * this.getGridSize();
+        return (x + 0.5) * this.getGridSize() + this.getOffset() * this.getGridSize();
     }
     toSCF(x) {//To Screen Coordinate Floored
-        return floor(x + 0.5) * this.getGridSize();
+        return floor(x + 0.5) * this.getGridSize() + this.getOffset() * this.getGridSize();
     }
     toSCC(x) {//To Screen Coordinate Ceiling'd
-        return ceil(x + 0.5) * this.getGridSize();
+        return ceil(x + 0.5) * this.getGridSize() + this.getOffset() * this.getGridSize();
     }
     getGridSize() {
         return this.gridScale * this.canvas.resolution;
@@ -147,6 +192,25 @@ class Layer extends IDObject {
     }
     [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
+    }
+    drawGrid() {
+        strokeWeight(1);
+        for (let x = this.getOffset() * this.getGridSize(); x < width; x += this.getGridSize()) {
+            if(x == width/2) {
+                stroke(100);
+            } else {
+                stroke(200);
+            }
+            line(x, 0, x, height);
+        }
+        for (let y = this.getOffset() * this.getGridSize(); y < height; y += this.getGridSize()) {
+            if(y == height/2) {
+                stroke(100);
+            } else {
+                stroke(200);
+            }
+            line(0, y, width, y);
+        }
     }
 }
 
@@ -356,7 +420,7 @@ class Tile extends TileLike {
         this.ignoreRotation = false;
     }
     static fromBlock(block, parent) {
-        let options = block.head.split(" ");
+        let options = getOptions(block.head);
         return new TileTypeReference[options[0]](ID.getNext(), int(options[1]), int(options[2]), int(options[3]), int(options[4]), int(options[5]), options[6], parent);
     }
     saveToString(indent) {
@@ -642,7 +706,7 @@ class BezierWedgeTile extends WedgeTile {
     }
     static fromBlock(block, parent) {
         let newBez = super.fromBlock(block, parent);
-        let options = block.head.split(" ");
+        let options = getOptions(block.head);
         newBez.startControlX = float(options[7]);
         newBez.startControlY = float(options[8]);
         newBez.endControlX = float(options[9]);
@@ -789,7 +853,7 @@ class LineTile extends Tile {
         return d < 10;
     }
     static fromBlock(block, parent) {
-        let options = block.head.split(" ");
+        let options = getOptions(block.head);
         return new TileTypeReference[options[0]](ID.getNext(), float(options[1]), float(options[2]), float(options[3]), float(options[4]), int(options[5]), options[6], parent);
     }
     draw() {

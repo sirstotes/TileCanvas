@@ -98,7 +98,14 @@
         </div>
         <div style="pointer-events: auto;">
           <div id="layers" class="sideMenu" style="display: none;">
-            <h3>Layers (Not yet implemented)</h3>
+            <h3>Layers</h3>
+            <div id="layerDisplay"></div>
+            <button onclick="addLayer()">New</button>
+          </div>
+          <div id="layerSettings" class="sideMenu" style="display: none;">
+            <h3>Layer Settings</h3>
+            <span>Offset: <input class="inlineInput" id="layerOffsetCheckbox" type="checkbox"></span>
+            <button id="layerRemoveButton">Remove Layer</button>
           </div>
           <div style="background:none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
@@ -122,10 +129,10 @@
           <div class="toolbarRow">
             <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
             <button class="shapeButton" id="RECT_Button" onclick="setTool('RECT')"><img src="assets/square.png"></button>
-            <button class="shapeButton" id="ELLIPSE_Button" onclick="setTool('ELLIPSE')"><img src="assets/circle.png"></button>
+            <button class="shapeButton" id="WEDGE_Button" onclick="setTool('WEDGE')"><img src="assets/wedge.png"></button>
+            <!-- <button class="shapeButton" id="ELLIPSE_Button" onclick="setTool('ELLIPSE')"><img src="assets/circle.png"></button> -->
             <button class="shapeButton" id="QUADRANT_Button" onclick="setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
             <button class="shapeButton" id="INVERSE_QUADRANT_Button" onclick="setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
-            <button class="shapeButton" id="WEDGE_Button" onclick="setTool('WEDGE')"><img src="assets/wedge.png"></button>
             <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')"><img src="assets/bezierWedge.png"></button>
             <button class="shapeButton" id="LINE_Button" onclick="setTool('LINE')"><img src="assets/line.png"></button>
             <button class="shapeButton" id="CURVE_Button" onclick="setTool('CURVE')"><img src="assets/curve.png"></button>

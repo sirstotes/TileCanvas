@@ -147,6 +147,18 @@ main {
     flex-grow: 1;
     background-color:var(--white);
 }
+#layerDisplay > span {
+    display: grid;
+    grid-template-areas: 'label . .'
+                         'label . .';
+    padding: 5px;
+}
+#layerDisplay > span > input {
+    grid-area: label;
+}
+#layerDisplay > .highlighted {
+    background-color: var(--highlight-2);
+}
 .bar {
     display: flex;
     flex-direction: column;

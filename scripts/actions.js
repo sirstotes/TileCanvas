@@ -69,6 +69,46 @@ class MultiAction extends Action {
         }
     }
 }
+class AddLayerAction extends Action {
+    constructor(layerID) {
+        super("ADD LAYER");
+        this.layerID = layerID;
+        this.index = maker.currentLayer + 1;
+    }
+    toString() {
+        return `${this.name} ${this.layerID}`;
+    }
+    run() {
+        maker.layers.push(new Layer(this.layerID, maker));
+        refreshLayerDisplay();
+    }
+    undo() {
+        ID.withObject(this.layerID, (layer) => {
+            maker.removeLayer(layer);
+        });
+        refreshLayerDisplay();
+    }
+}
+class RemoveLayerAction extends Action {
+    constructor(layer) {
+        super("REMOVE LAYER");
+        this.layerID = layer.ID;
+        this.positionInParent = maker.layers.indexOf(layer);
+    }
+    toString() {
+        return `${this.name} ${this.layerID}`;
+    }
+    run() {
+        ID.withObject(this.layerID, (layer) => {
+            maker.removeLayer(layer);
+        });
+        refreshLayerDisplay();
+    }
+    undo() {
+        maker.layers.splice(this.positionInParent, 0, new Layer(this.layerID, maker));
+        refreshLayerDisplay();
+    }
+}
 class AddTileAction extends Action {
     constructor(tileID, type, startX, startY, endX, endY, rotation, color, layerID) {
         super("ADD");

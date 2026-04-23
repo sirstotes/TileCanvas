@@ -282,11 +282,13 @@ function continuousPress(button, callback) {
 }
 
 function newProject() {
+    console.log("New Project");
     ID.reset();
     let currentTool = maker.currentTool;
     maker = new Maker(document.getElementById("canvasW").value, document.getElementById("canvasH").value, document.getElementById("tileResolution").value, 1, document.getElementById("canvasBG").value);
     maker.currentTool = currentTool;
     resizeCanvas(maker.width*maker.resolution, maker.height*maker.resolution);
+    refreshLayerDisplay();
 }
 
 function loadProject() {
@@ -324,6 +326,7 @@ function loadFileText(text) {
         console.error(error);
         maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
     }
+    refreshLayerDisplay();
 }
 
 function saveProject() {
@@ -347,15 +350,19 @@ function getIndentBlocks(lines) {
         if(numberOfTabs(line) == 0) {
             if(blockIndex < blocks.length && nextLines.length > 0) {
                 blocks[blockIndex].children = getIndentBlocks(nextLines);
+                nextLines = [];
             }
             blocks.push({head: line, children: []});
             blockIndex ++;
-        } else {
+        } else if(line.trim() != '') {
             nextLines.push(line.slice(1));
         }
     }
     if(blockIndex < blocks.length && nextLines.length > 0) {
         blocks[blockIndex].children = getIndentBlocks(nextLines);
+    }
+    if(blocks[blocks.length - 1].head == '' && blocks[blocks.length - 1].children.length == 0) {
+        blocks.pop();
     }
     return blocks;
 }
@@ -367,6 +374,92 @@ function numberOfTabs(text) {
     count++;
   }
   return count;
+}
+
+function addLayer() {
+    maker.addAction(new AddLayerAction(ID.getNext()));
+    maker.submitActions();
+}
+
+function refreshLayerDisplay() {
+    let display = document.getElementById('layerDisplay');
+    display.innerHTML = "";
+    for(let i = 0; i < maker.layers.length; i ++) {
+        let node = document.createElement("span");
+        let name = document.createElement("input");
+            name.type = "text";
+            name.style.flexGrow = 1;
+            name.classList.add("inlineInput");
+            name.readOnly = true;
+            name.value = maker.layers[i].name;
+            name.onclick = () => {maker.currentLayer = i;refreshLayerDisplay();};
+            name.ondblclick = () => {name.readOnly = ''};
+            name.onchange = () => {
+                maker.layers[i].name = name.value;
+                name.readOnly = true;
+            }
+        node.appendChild(name);
+        let upButton = document.createElement("button");
+            upButton.innerHTML = '<img src="assets/angle-small-up.png">';
+            upButton.onclick = () => {
+                maker.moveLayerUp(maker.layers[i]);
+                refreshLayerDisplay();
+            };
+        node.appendChild(upButton);
+        let showButton = document.createElement("button");
+            if(maker.layers[i].hidden) {
+                showButton.innerHTML = '<img src="assets/eye-crossed.png">';
+            } else {
+                showButton.innerHTML = '<img src="assets/eye.png">';
+            }
+            showButton.onclick = () => {
+                if(maker.layers[i].hidden) {
+                    showButton.innerHTML = '<img src="assets/eye.png">';
+                } else {
+                    showButton.innerHTML = '<img src="assets/eye-crossed.png">';
+                }
+                maker.layers[i].hidden = !maker.layers[i].hidden;
+            }
+        node.appendChild(showButton);
+        let downButton = document.createElement("button");
+            downButton.innerHTML = '<img src="assets/angle-small-down.png">';
+            downButton.onclick = () => {
+                maker.moveLayerDown(maker.layers[i]);
+                refreshLayerDisplay();
+            };
+        node.appendChild(downButton);
+        let settingsButton = document.createElement("button");
+            settingsButton.innerHTML = '<img src="assets/settings.png">';
+            settingsButton.onclick = () => {
+                maker.currentLayer = i;
+                refreshLayerDisplay();
+                let menu = document.getElementById("layerSettings");
+                if(menu.currentLayer != i) {
+                    menu.style.display = null;
+                    menu.currentLayer = i;
+                    document.getElementById("layerOffsetCheckbox").value = maker.layers[i].offset;
+                    document.getElementById("layerOffsetCheckbox").onchange = (event) => {
+                        maker.layers[i].offset = event.target.checked;
+                    };
+                    console.log(maker.layers.length == 1);
+                    document.getElementById("layerRemoveButton").disabled = maker.layers.length == 1;
+                    document.getElementById("layerRemoveButton").onclick = () => {
+                        maker.addAction(new RemoveLayerAction(maker.layers[i]));
+                        maker.submitActions();
+                        menu.style.display = "none";
+                        menu.currentLayer = null;
+                    }
+                } else {
+                    menu.style.display = "none";
+                    menu.currentLayer = null;
+                }
+            };
+        node.appendChild(settingsButton);
+        if(i == maker.currentLayer) {
+            node.classList.add("highlighted");
+        }
+        display.appendChild(node);
+    }
 }
 
 let canvas;
@@ -392,6 +485,7 @@ function setup() {
         console.error(error);
         maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
     }
+    refreshLayerDisplay();
 
     let p = localStorage.getItem('palette');
     if(p != undefined && p.length > 0) {
