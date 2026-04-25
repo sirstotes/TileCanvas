@@ -186,16 +186,16 @@ class LineTool extends ShapeTool {
         }
     }
     getStartX() {
-        return this.maker.getActiveLayer().toLCX(this.maker.currentStartMouseX*2)/2 - 0.5;
+        return this.maker.getActiveLayer().toLCX(this.maker.currentStartMouseX);
     }
     getStartY() {
-        return this.maker.getActiveLayer().toLCY(this.maker.currentStartMouseY*2)/2 - 0.5;
+        return this.maker.getActiveLayer().toLCY(this.maker.currentStartMouseY);
     }
     getEndX() {
-        return this.maker.getActiveLayer().toLCX(this.maker.currentEndMouseX*2)/2 - 0.5;
+        return this.maker.getActiveLayer().toLCX(this.maker.currentEndMouseX);
     }
     getEndY() {
-        return this.maker.getActiveLayer().toLCY(this.maker.currentEndMouseY*2)/2 - 0.5;
+        return this.maker.getActiveLayer().toLCY(this.maker.currentEndMouseY);
     }
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
