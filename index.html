@@ -61,11 +61,11 @@
             <span>
               Background Color:
               <input id="canvasBGPicker" type="color">
-              <input class="inlineInput" id="canvasBG" type="text" value="#FFFFFF">
+              <input class="inlineInput" id="canvasBG" type="text" value="#FFFFFF" onclick="this.select()">
               <button class="inlineInput" onclick="setBackgroundColor(document.getElementById('canvasBG').value)">Apply</button>
             </span>
             <span><button class="inlineInput" onclick="newProject();">New Project</button><button class="inlineInput" onclick="loadProject();">Load Project</button></span>
-            <span><input class="inlineInput" id="fileName" type="text" value="filename">
+            <span><input class="inlineInput" id="fileName" type="text" value="filename" onclick="this.select()">
               <button onclick="downloadCanvas()">Save as image</button>
               <button onclick="saveProject();">Save as file</button></span>
           </div>
@@ -103,22 +103,25 @@
             <button onclick="addLayer()">New</button>
           </div>
           <div id="layerSettings" class="sideMenu" style="display: none;">
-            <h3>Layer Settings</h3>
-            <span>Offset: <input class="inlineInput" id="layerOffsetCheckbox" type="checkbox"></span>
+            <h4>Layer Settings</h4>
+            <span>Name: <input class="inlineInput" type="text" id="layerNameInput" onclick="this.select()"></span>
+            <span>Scale: <input type="range" min="-2" max="2" value="0" id="layerScaleRange"></span>
+            <span>X Offset: <input class="inlineInput" id="layerOffsetXCheckbox" type="checkbox"></span>
+            <span>Y Offset: <input class="inlineInput" id="layerOffsetYCheckbox" type="checkbox"></span>
             <button id="layerRemoveButton">Remove Layer</button>
           </div>
           <div style="background:none;flex-grow:1;"></div>
           <div id="paletteSettings" class="sideMenu" style="display: none;">
             <h3>Palette</h3>
             <span>
-              <input id="paletteTextInput" class="inlineInput" type="text" value="hex codes here">
+              <input id="paletteTextInput" class="inlineInput" type="text" value="hex codes here" onclick="this.select()">
               <button onclick="loadColorsFromString(document.getElementById('paletteTextInput').value)">Load New</button>
               <button onclick="loadColors(defaultPalette)">Reset</button>
             </span>
             <div id="paletteButtons"></div>
             <span>
               <input type="color" id="newColorPicker" value="#ff0000">
-              <input class="inlineInput" id="newColorText" type="text" value="#ffffff">
+              <input class="inlineInput" id="newColorText" type="text" value="#ffffff" onclick="this.select()">
               <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/add.png"></button>
             </span>
           </div>

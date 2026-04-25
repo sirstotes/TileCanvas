@@ -79,8 +79,8 @@ class AddLayerAction extends Action {
         return `${this.name} ${this.layerID}`;
     }
     run() {
-        maker.layers.push(new Layer(this.layerID, maker));
-        refreshLayerDisplay();
+        maker.layers.splice(maker.currentLayer+1, 0, new Layer(this.layerID, maker));
+        maker.setCurrentLayer(maker.currentLayer+1);
     }
     undo() {
         ID.withObject(this.layerID, (layer) => {

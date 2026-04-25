@@ -169,6 +169,9 @@ function toggleMenu(id, button) {
     } else {
         document.getElementById(id).style.display = "none";
         button.classList = [];
+        if(document.getElementById(id).onhide) {
+            document.getElementById(id).onhide();
+        }
     }
 }
 
@@ -381,31 +384,62 @@ function addLayer() {
     maker.submitActions();
 }
 
+function initializeLayerSettings() {
+    let menu = document.getElementById("layerSettings");
+    document.getElementById('layers').onhide = () => {
+        menu.style.display = "none";
+        menu.currentLayer = null;
+    };
+    document.getElementById("layerNameInput").onchange = (event) => {
+        menu.currentLayer.name = event.target.value;
+        refreshLayerDisplay();
+    };
+    document.getElementById("layerScaleRange").onchange = (event) => {
+        menu.currentLayer.gridScale = event.target.value;
+    };
+    document.getElementById("layerOffsetXCheckbox").onchange = (event) => {
+        menu.currentLayer.offsetX = event.target.checked;
+    };
+    document.getElementById("layerOffsetYCheckbox").onchange = (event) => {
+        menu.currentLayer.offsetY = event.target.checked;
+    };
+    document.getElementById("layerRemoveButton").onclick = () => {
+        maker.addAction(new RemoveLayerAction(menu.currentLayer));
+        maker.submitActions();
+        menu.style.display = "none";
+        menu.currentLayer = null;
+    }
+}
+
+function refreshLayerSettings(layer) {
+    document.getElementById("layerSettings").currentLayer = layer;
+    document.getElementById("layerNameInput").value = layer.name;
+    document.getElementById("layerScaleRange").value = layer.gridScale;
+    document.getElementById("layerOffsetXCheckbox").checked = layer.offsetX;
+    document.getElementById("layerOffsetYCheckbox").checked = layer.offsetY;
+    document.getElementById("layerRemoveButton").disabled = maker.layers.length == 1;
+}
+
 function refreshLayerDisplay() {
     let display = document.getElementById('layerDisplay');
     display.innerHTML = "";
     for(let i = 0; i < maker.layers.length; i ++) {
         let node = document.createElement("span");
-        let name = document.createElement("input");
+        let name = document.createElement("button");
             name.type = "text";
             name.style.flexGrow = 1;
+            name.style.gridArea = "label";
             name.classList.add("inlineInput");
-            name.readOnly = true;
-            name.value = maker.layers[i].name;
-            name.onclick = () => {maker.currentLayer = i;refreshLayerDisplay();};
-            name.ondblclick = () => {name.readOnly = ''};
-            name.onchange = () => {
-                maker.layers[i].name = name.value;
-                name.readOnly = true;
-            }
+            name.innerText = maker.layers[i].name;
+            name.onclick = () => {maker.setCurrentLayer(i)};
         node.appendChild(name);
-        let upButton = document.createElement("button");
-            upButton.innerHTML = '<img src="assets/angle-small-up.png">';
-            upButton.onclick = () => {
-                maker.moveLayerUp(maker.layers[i]);
+        let downButton = document.createElement("button");
+            downButton.innerHTML = '<img src="assets/angle-small-up.png">';
+            downButton.onclick = () => {
+                maker.moveLayerDown(maker.layers[i]);
                 refreshLayerDisplay();
             };
-        node.appendChild(upButton);
+        node.appendChild(downButton);
         let showButton = document.createElement("button");
             if(maker.layers[i].hidden) {
                 showButton.innerHTML = '<img src="assets/eye-crossed.png">';
@@ -421,37 +455,24 @@ function refreshLayerDisplay() {
                 maker.layers[i].hidden = !maker.layers[i].hidden;
             }
         node.appendChild(showButton);
-        let downButton = document.createElement("button");
-            downButton.innerHTML = '<img src="assets/angle-small-down.png">';
-            downButton.onclick = () => {
-                maker.moveLayerDown(maker.layers[i]);
+        let upButton = document.createElement("button");
+            upButton.innerHTML = '<img src="assets/angle-small-down.png">';
+            upButton.onclick = () => {
+                maker.moveLayerUp(maker.layers[i]);
                 refreshLayerDisplay();
             };
-        node.appendChild(downButton);
+        node.appendChild(upButton);
         let settingsButton = document.createElement("button");
             settingsButton.innerHTML = '<img src="assets/settings.png">';
             settingsButton.onclick = () => {
-                maker.currentLayer = i;
-                refreshLayerDisplay();
+                let reclick = maker.currentLayer == i;
+                maker.setCurrentLayer(i);
                 let menu = document.getElementById("layerSettings");
-                if(menu.currentLayer != i) {
-                    menu.style.display = null;
-                    menu.currentLayer = i;
-                    document.getElementById("layerOffsetCheckbox").value = maker.layers[i].offset;
-                    document.getElementById("layerOffsetCheckbox").onchange = (event) => {
-                        maker.layers[i].offset = event.target.checked;
-                    };
-                    console.log(maker.layers.length == 1);
-                    document.getElementById("layerRemoveButton").disabled = maker.layers.length == 1;
-                    document.getElementById("layerRemoveButton").onclick = () => {
-                        maker.addAction(new RemoveLayerAction(maker.layers[i]));
-                        maker.submitActions();
-                        menu.style.display = "none";
-                        menu.currentLayer = null;
-                    }
-                } else {
+                if(reclick && menu.style.display != 'none') {
                     menu.style.display = "none";
                     menu.currentLayer = null;
+                } else {
+                    menu.style.display = '';
                 }
             };
         node.appendChild(settingsButton);
@@ -485,6 +506,7 @@ function setup() {
         console.error(error);
         maker = new Maker(initialSize, initialSize, initialResolution, 1, "#ffffff");
     }
+    initializeLayerSettings();
     refreshLayerDisplay();
 
     let p = localStorage.getItem('palette');
@@ -570,9 +592,9 @@ function keyPressed() {
         case 'r':
             setTool("RECT");
         break;
-        case 'c':
-            setTool("ELLIPSE");
-        break;
+        // case 'c':
+        //     setTool("ELLIPSE");
+        // break;
         case 'q':
             setTool("QUADRANT");
         break;

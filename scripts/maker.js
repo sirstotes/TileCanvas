@@ -117,7 +117,7 @@ class Maker {//TODO split into maker and canvas
             }
             this.currentEndMouseX = round(mouseX);
             this.currentEndMouseY = round(mouseY);
-            if(this.getActiveLayer().toLCF(mouseX) != this.getActiveLayer().toLCF(this.pMouseX) || this.getActiveLayer().toLCF(mouseY) != this.getActiveLayer().toLCF(this.pMouseY)) {
+            if(this.getActiveLayer().toLCFX(mouseX) != this.getActiveLayer().toLCFX(this.pMouseX) || this.getActiveLayer().toLCFY(mouseY) != this.getActiveLayer().toLCFY(this.pMouseY)) {
                 this.currentTool.onTileChange(this);
             }
         }
@@ -127,28 +127,28 @@ class Maker {//TODO split into maker and canvas
         this.pMousePressed = mousePressed;
     }
     getStartX() {
-        return this.getActiveLayer().toLCF(min(this.currentStartMouseX, this.currentEndMouseX));
+        return this.getActiveLayer().toLCFX(min(this.currentStartMouseX, this.currentEndMouseX));
     }
     getStartY() {
-        return this.getActiveLayer().toLCF(min(this.currentStartMouseY, this.currentEndMouseY));
+        return this.getActiveLayer().toLCFY(min(this.currentStartMouseY, this.currentEndMouseY));
     }
     getEndX() {
-        return this.getActiveLayer().toLCF(max(this.currentStartMouseX, this.currentEndMouseX));
+        return this.getActiveLayer().toLCFX(max(this.currentStartMouseX, this.currentEndMouseX));
     }
     getEndY() {
-        return this.getActiveLayer().toLCF(max(this.currentStartMouseY, this.currentEndMouseY));
+        return this.getActiveLayer().toLCFY(max(this.currentStartMouseY, this.currentEndMouseY));
     }
     getCurrentX() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseX);
+        return this.getActiveLayer().toLCFX(this.currentEndMouseX);
     }
     getCurrentY() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseY);
+        return this.getActiveLayer().toLCFY(this.currentEndMouseY);
     }
     getXOffset() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseX - this.currentStartMouseX);
+        return this.getActiveLayer().toLCFX(this.currentEndMouseX - this.currentStartMouseX);
     }
     getYOffset() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseY - this.currentStartMouseY);
+        return this.getActiveLayer().toLCFY(this.currentEndMouseY - this.currentStartMouseY);
     }
     startEndEqual() {
         return this.getStartX() == this.getEndX() && this.getStartY() == this.getEndY();
@@ -191,6 +191,11 @@ class Maker {//TODO split into maker and canvas
         }
         this.render(this.displayCanvas);
         saveCanvas(fileName+".png");
+    }
+    setCurrentLayer(index) {
+        this.currentLayer = index;
+        refreshLayerSettings(this.layers[this.currentLayer]);
+        refreshLayerDisplay();
     }
     setRotation(rotation) {
         this.currentRotation = rotation;

@@ -117,8 +117,8 @@ class ShapeTool extends Tool {
     }
     update(maker, mouseX, mouseY, mousePressed) {
         if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.DRAG) {
-            let cmx = maker.getActiveLayer().toSC(maker.getActiveLayer().toLCF(maker.currentStartMouseX));
-            let cmy = maker.getActiveLayer().toSC(maker.getActiveLayer().toLCF(maker.currentStartMouseY));
+            let cmx = maker.getActiveLayer().toSCX(maker.getActiveLayer().toLCFX(maker.currentStartMouseX));
+            let cmy = maker.getActiveLayer().toSCY(maker.getActiveLayer().toLCFY(maker.currentStartMouseY));
             if (mouseX > cmx && mouseY > cmy) {
                 maker.setRotation(2);
             } else if (mouseX < cmx && mouseY > cmy) {
@@ -186,16 +186,16 @@ class LineTool extends ShapeTool {
         }
     }
     getStartX() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseX) - 0.5;
+        return this.maker.getActiveLayer().toLCX(this.maker.currentStartMouseX*2)/2 - 0.5;
     }
     getStartY() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseY) - 0.5;
+        return this.maker.getActiveLayer().toLCY(this.maker.currentStartMouseY*2)/2 - 0.5;
     }
     getEndX() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseX) - 0.5;
+        return this.maker.getActiveLayer().toLCX(this.maker.currentEndMouseX*2)/2 - 0.5;
     }
     getEndY() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseY) - 0.5;
+        return this.maker.getActiveLayer().toLCY(this.maker.currentEndMouseY*2)/2 - 0.5;
     }
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
@@ -280,9 +280,9 @@ class EraseTool extends Tool {
         strokeWeight(3);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && !maker.startEndEqual()) {
             let al = maker.getActiveLayer();
-            line(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
-            line(al.toSCC(maker.getEndX()), al.toSCF(maker.getStartY()), al.toSCF(maker.getStartX()), al.toSCC(maker.getEndY()));
-            rect(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
+            line(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
+            line(al.toSCCX(maker.getEndX()), al.toSCFY(maker.getStartY()), al.toSCFX(maker.getStartX()), al.toSCCY(maker.getEndY()));
+            rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
         } else {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
                 tile.drawOutline(0, 0);
@@ -336,7 +336,7 @@ class PaintTool extends Tool {
         strokeWeight(3);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && !maker.startEndEqual()) {
             let al = maker.getActiveLayer();
-            rect(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
+            rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
         } else {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
                 tile.drawOutline(0, 0);
@@ -400,7 +400,7 @@ class SelectTool extends Tool {
             strokeWeight(3);
             drawingContext.setLineDash([10, 10]);
             let al = maker.getActiveLayer();
-            rect(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
+            rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
             drawingContext.setLineDash([]);
         }
     }
@@ -510,9 +510,9 @@ class BezierTool extends Tool {
     update(maker, mouseX, mouseY, mousePressed) {
         if(!this.moving) {
             let al = maker.getActiveLayer();
-            if(dist(mouseX, mouseY, al.toSCF(this.bezierTile.getStartControlX()), al.toSCF(this.bezierTile.getStartControlY())) < al.getGridSize()) {
+            if(dist(mouseX, mouseY, al.toSCFX(this.bezierTile.getStartControlX()), al.toSCFY(this.bezierTile.getStartControlY())) < al.getGridSize()) {
                 this.hovering = 1;
-            } else if(dist(mouseX, mouseY, al.toSCF(this.bezierTile.getEndControlX()), al.toSCF(this.bezierTile.getEndControlY())) < al.getGridSize()) {
+            } else if(dist(mouseX, mouseY, al.toSCFX(this.bezierTile.getEndControlX()), al.toSCFY(this.bezierTile.getEndControlY())) < al.getGridSize()) {
                 this.hovering = 2;
             } else {
                 this.hovering = 0;
@@ -556,7 +556,7 @@ class CropTool extends Tool {
         strokeWeight(3);
         drawingContext.setLineDash([10, 10]);
         let al = maker.getActiveLayer();
-        rect(al.toSCF(maker.getStartX()), al.toSCF(maker.getStartY()), al.toSCC(maker.getEndX()), al.toSCC(maker.getEndY()));
+        rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
         drawingContext.setLineDash([]);
     }
     onMouseReleased(maker) {

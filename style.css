@@ -25,6 +25,10 @@ h3 {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+h4 {
+    margin-top:0;
+    margin-bottom: 5px;
+}
 P {
     margin-top: 0;
 }
@@ -136,6 +140,7 @@ main {
     flex-direction: column;
     gap: 5px;
     pointer-events: auto;
+    min-width: 20vw;
 }
 .sideMenu > span {
     display: flex;
@@ -147,14 +152,16 @@ main {
     flex-grow: 1;
     background-color:var(--white);
 }
+#layerDisplay {
+    display: flex;
+    flex-direction: column-reverse;
+}
 #layerDisplay > span {
     display: grid;
+    grid-template-columns: auto 30px 30px;
     grid-template-areas: 'label . .'
                          'label . .';
     padding: 5px;
-}
-#layerDisplay > span > input {
-    grid-area: label;
 }
 #layerDisplay > .highlighted {
     background-color: var(--highlight-2);
