@@ -22,12 +22,12 @@ div {
     background-color: var(--gray);
 }
 h3 {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 h4 {
     margin-top:0;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 P {
     margin-top: 0;
@@ -35,9 +35,10 @@ P {
 button, input, select {
     background-color: var(--highlight-1);
     border: none;
-    padding: 5px;
-    min-width:30px;
-    min-height:30px;
+    border-radius: 4px;
+    padding: 0;
+    min-width:32px;
+    min-height:32px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -51,11 +52,11 @@ button:disabled {
     cursor: auto;
 }
 button img {
-    width: 20px;
+    width: 32px;
 }
 .selected, .selectedButton {
-    transform: translate(0, -5px);
-    box-shadow: 0 5px var(--white);
+    transform: translate(0, -8px);
+    box-shadow: 0 8px var(--white);
 }
 .highlighted {
     background-color: var(--highlight-3);
@@ -74,31 +75,35 @@ main {
 .toolbar {
     display: flex;
     flex-direction: column;
-    padding: 10px;
-    gap: 10px;
+    padding: 8px;
+    gap: 8px;
     overflow-x: auto;
     align-items: stretch;
     align-self: stretch;
     pointer-events: auto;
 }
+.toolbar input {
+    padding: 4px;
+}
 .toolbarRow {
     margin: 0;
     display: flex;
     flex-direction: row;
-    gap: 2px;
+    gap: 4px;
 }
 .toolbarRow > button {
     flex-grow: 1;
 }
 .toolbarRow > span {
     display:flex;
-    gap: 2px;
+    gap: 4px;
 }
 .toolbarRow > span > button {
     flex-grow: 1;
 }
 .extraBar {
     align-self:center;
+    border-radius: 8px;
 }
 #UI {
     position:absolute;
@@ -117,16 +122,16 @@ main {
 }
 #centerArea {
     flex-grow:1;
-    padding: 5px;
+    padding: 4px;
     display: flex;
     overflow: hidden;
     justify-content: space-between;
 }
 #centerArea > div {
-    max-width: min(400px, 50%);
+    max-width: min(512px, 50%);
     height:100%;
     display: flex;
-    gap: 5px;
+    gap: 4px;
     flex-direction: column;
     background: none;
     overflow-x: hidden;
@@ -135,17 +140,18 @@ main {
 .sideMenu {
     background-color: var(--highlight-3);
     color: var(--black);
-    padding:10px;
+    padding:8px;
     display:flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     pointer-events: auto;
     min-width: 20vw;
+    border-radius: 8px;
 }
 .sideMenu > span {
     display: flex;
     align-items: center;
-    gap:5px;
+    gap:4px;
     text-align: left;
 }
 .sideMenu > span > input, .sideMenu > span > select {
@@ -158,10 +164,11 @@ main {
 }
 #layerDisplay > span {
     display: grid;
-    grid-template-columns: auto 30px 30px;
+    grid-template-columns: auto 32px 32px;
+    grid-template-rows: 32px 32px;
     grid-template-areas: 'label . .'
                          'label . .';
-    padding: 5px;
+    padding: 4px;
 }
 #layerDisplay > .highlighted {
     background-color: var(--highlight-2);
@@ -169,7 +176,7 @@ main {
 .bar {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 #bottomBar {
     flex-direction: column-reverse;
@@ -182,7 +189,8 @@ main {
     flex-grow: 1;
 }
 #canvasContainer {
-    padding: 10px;
+    padding: 0;
+    border: 4px solid var(--gray);
 }
 #paletteSettings {
     justify-content: flex-end;

@@ -23,36 +23,17 @@ class Tool {
     constructor(name) {
         this.name = name;
     }
-    draw(maker) {
-
-    }
-    update(maker, mouseX, mouseY, mousePressed) {
-
-    }
-    onEnable(maker) {
-
-    }
-    onDisable(maker) {
-
-    }
-    onMousePressed(maker) {
-
-    }
-    onMouseReleased(maker) {
-
-    }
-    onDrag(maker) {
-
-    }
-    onDragStart(maker) {
-
-    }
-    onDragEnd(maker) {
-
-    }
-    onTileChange(maker) {
-
-    }
+    drawBefore(maker) {}
+    draw(maker) {}
+    update(maker, mouseX, mouseY, mousePressed) {}
+    onEnable(maker) {}
+    onDisable(maker) {}
+    onMousePressed(maker) {}
+    onMouseReleased(maker) {}
+    onDrag(maker) {}
+    onDragStart(maker) {}
+    onDragEnd(maker) {}
+    onTileChange(maker) {}
 }
 
 class ShapeTool extends Tool {
@@ -117,21 +98,20 @@ class ShapeTool extends Tool {
     }
     update(maker, mouseX, mouseY, mousePressed) {
         if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.DRAG) {
-            let cmx = maker.getActiveLayer().toSCX(maker.getActiveLayer().toLCFX(maker.currentStartMouseX));
-            let cmy = maker.getActiveLayer().toSCY(maker.getActiveLayer().toLCFY(maker.currentStartMouseY));
+            let cmx = maker.getActiveLayer().toSCX(maker.getActiveLayer().toLCX(maker.currentStartMouseX));
+            let cmy = maker.getActiveLayer().toSCY(maker.getActiveLayer().toLCY(maker.currentStartMouseY));
             if (mouseX > cmx && mouseY > cmy) {
-                maker.setRotation(2);
-            } else if (mouseX < cmx && mouseY > cmy) {
-                maker.setRotation(3);
-            } else if (mouseX < cmx && mouseY < cmy) {
                 maker.setRotation(0);
-            } else if (mouseX > cmx && mouseY < cmy) {
+            } else if (mouseX < cmx && mouseY > cmy) {
                 maker.setRotation(1);
+            } else if (mouseX < cmx && mouseY < cmy) {
+                maker.setRotation(2);
+            } else if (mouseX > cmx && mouseY < cmy) {
+                maker.setRotation(3);
             }
         }
     }
 }
-
 class RectTool extends ShapeTool {
     constructor() {
         super("RECT", RectTile);
@@ -157,6 +137,18 @@ class WedgeTool extends ShapeTool {
 class LineTool extends ShapeTool {
     constructor() {
         super("LINE", LineTile);
+        this.strokeWeight = -2;
+        this.minStrokeWeight = -3;
+        this.maxStrokeWeight = 0;
+    }
+    getStrokeWeight(layer) {
+        return layer.getGridSize()*(2**this.strokeWeight);
+    }
+    increaseStrokeWeight() {
+        this.strokeWeight = min(this.strokeWeight + 1, this.maxStrokeWeight);
+    }
+    decreaseStrokeWeight() {
+        this.strokeWeight = max(this.strokeWeight - 1, this.minStrokeWeight);
     }
     place(maker, sX, sY, eX, eY, r, c, layer) {
         //TODO: redo this maybe?
@@ -182,7 +174,9 @@ class LineTool extends ShapeTool {
             });
         }
         if(!cancelPlacement) {
-            maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+            let tID = ID.getNext();
+            maker.addAction(new AddTileAction(tID, this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+            maker.addAction(new ModifyTileAction(tID, "strokeWeight", -2, this.strokeWeight));
         }
     }
     getStartX() {
@@ -199,16 +193,23 @@ class LineTool extends ShapeTool {
     }
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
-            strokeWeight(5);
+            strokeWeight(this.getStrokeWeight(maker.getActiveLayer()));
             stroke(maker.getColor());
-            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getActiveLayer());
+            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, maker.getActiveLayer());
         }
+    }
+    onEnable(maker) {
+        this.maker = maker;
+        document.getElementById("lineTools").style.display = "";
+    }
+    onDisable(maker) {
+        document.getElementById("lineTools").style.display = "none";
     }
     onMousePressed(maker) {
         
     }
     onMouseReleased(maker) {
-        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, maker.getColor(), maker.getActiveLayer());
         maker.submitActions();
     }
     onTileChange(maker) {
@@ -218,10 +219,21 @@ class LineTool extends ShapeTool {
 
     }
 }
-
 class CurveTool extends ShapeTool {
     constructor() {
         super("CURVE", CurveTile);
+        this.strokeWeight = -2;
+        this.minStrokeWeight = -3;
+        this.maxStrokeWeight = 0;
+    }
+    getStrokeWeight(layer) {
+        return layer.getGridSize()*(2**this.strokeWeight);
+    }
+    increaseStrokeWeight() {
+        this.strokeWeight = min(this.strokeWeight + 1, this.maxStrokeWeight);
+    }
+    decreaseStrokeWeight() {
+        this.strokeWeight = max(this.strokeWeight - 1, this.minStrokeWeight);
     }
     place(maker, sX, sY, eX, eY, r, c, layer) {
         //TODO: redo this maybe?
@@ -247,16 +259,25 @@ class CurveTool extends ShapeTool {
             });
         }
         if(!cancelPlacement) {
-            maker.addAction(new AddTileAction(ID.getNext(), this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+            let tID = ID.getNext();
+            maker.addAction(new AddTileAction(tID, this.shapeType, sX, sY, eX, eY, r, c, layer.ID));
+            maker.addAction(new ModifyTileAction(tID, "strokeWeight", -2, this.strokeWeight));
         }
     }
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
             noFill();
-            strokeWeight(5);
+            strokeWeight(this.getStrokeWeight(maker.getActiveLayer()));
             stroke(maker.getColor());
             this.shapeType.drawRaw(maker.getStartX(), maker.getStartY(), maker.getEndX(), maker.getEndY(), maker.getRotation(), maker.getActiveLayer());
         }
+    }
+    onEnable(maker) {
+        this.maker = maker;
+        document.getElementById("lineTools").style.display = "";
+    }
+    onDisable(maker) {
+        document.getElementById("lineTools").style.display = "none";
     }
     onMousePressed(maker) {
         
@@ -274,6 +295,18 @@ class EraseTool extends Tool {
     constructor() {
         super("ERASE")
     }
+    drawBefore(maker) {
+        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || maker.startEndEqual()) {
+            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+                if(tile.drawOutlineBefore) {
+                    noFill();
+                    stroke(255, 0, 0);
+                    strokeWeight(3);
+                    tile.drawOutline(0, 0);
+                }
+            });
+        }
+    }
     draw(maker) {
         noFill();
         stroke(255, 0, 0);
@@ -285,7 +318,9 @@ class EraseTool extends Tool {
             rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
         } else {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                tile.drawOutline(0, 0);
+                if(!tile.drawOutlineBefore) {
+                    tile.drawOutline(0, 0);
+                }
             });
         }
     }
@@ -330,6 +365,18 @@ class PaintTool extends Tool {
     constructor() {
         super("PAINT");
     }
+    drawBefore(maker) {
+        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || maker.startEndEqual()) {
+            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+                if(tile.drawOutlineBefore) {
+                    noFill();
+                    stroke(maker.getColor());
+                    strokeWeight(3);
+                    tile.drawOutline(0, 0);
+                }
+            });
+        }
+    }
     draw(maker) {
         noFill();
         stroke(maker.getColor());
@@ -339,7 +386,9 @@ class PaintTool extends Tool {
             rect(al.toSCFX(maker.getStartX()), al.toSCFY(maker.getStartY()), al.toSCCX(maker.getEndX()), al.toSCCY(maker.getEndY()));
         } else {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
-                tile.drawOutline(0, 0);
+                if(!tile.drawOutlineBefore) {
+                    tile.drawOutline(0, 0);
+                }
             });
         }
     }

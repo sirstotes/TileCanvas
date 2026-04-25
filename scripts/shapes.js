@@ -443,6 +443,7 @@ class Tile extends TileLike {
         this.rotation = rotation;
         this.color = color;
         this.ignoreRotation = false;
+        this.drawOutlineBefore = false;
     }
     static fromBlock(block, parent) {
         let options = getOptions(block.head);
@@ -517,10 +518,14 @@ class EllipseTile extends Tile {
         ellipse(layer.toSCFX(sX), layer.toSCFY(sY), layer.toSCCX(eX), layer.toSCCY(eY));
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {
-        let centerX = layer.toSCX(sX + (eX - sX) / 2);
-        let centerY = layer.toSCY(sY + (eY - sY) / 2);
-        let radiusX = (layer.toSCFX(sX) - layer.toSCCX(eX)) / 2;
-        let radiusY = (layer.toSCFY(sY) - layer.toSCCY(eY)) / 2;
+        let sSX = layer.toSCFX(sX);
+        let sSY = layer.toSCFY(sY);
+        let sEX = layer.toSCCX(eX);
+        let sEY = layer.toSCCX(eY);
+        let centerX = sSX + (sEX - sSX)/2;
+        let centerY = sSY + (sEY - sSY)/2;
+        let radiusX = (sSX - sEX) / 2;
+        let radiusY = (sSY - sEY) / 2;
         return inEllipse(centerX, centerY, radiusX, radiusY, mouseX, mouseY);
     }
 }
@@ -806,10 +811,10 @@ class BezierWedgeTile extends WedgeTile {
     }
     static getStartControls(sX, sY, eX, eY, r) {
         let corners = [
-            {x: sX - 0.5, y: eY + 0.5},
-            {x: sX - 0.5, y: sY - 0.5},
-            {x: eX + 0.5, y: sY - 0.5},
-            {x: eX + 0.5, y: eY + 0.5},
+            {x: sX, y: eY + 1},
+            {x: sX, y: sY},
+            {x: eX + 1, y: sY},
+            {x: eX + 1, y: eY + 1},
         ]
         return {x1: corners[(r+2)%4].x, y1: corners[(r+2)%4].y, x2: corners[r%4].x, y2: corners[r%4].y};
     }
@@ -853,7 +858,7 @@ class BezierWedgeTile extends WedgeTile {
         ]
         stroke(255, 0, 0);
         strokeWeight(3);
-        line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSC(this.getStartControlX()+offsetX), this.getLayer().toSC(this.getStartControlY()+offsetY));
+        line(corners[(this.rotation+2)%4].x, corners[(this.rotation+2)%4].y, this.getLayer().toSCX(this.getStartControlX()+offsetX), this.getLayer().toSCY(this.getStartControlY()+offsetY));
         line(corners[this.rotation].x, corners[this.rotation].y, this.getLayer().toSCX(this.getEndControlX()+offsetX), this.getLayer().toSCY(this.getEndControlY()+offsetY));
         strokeWeight(10);
         point(this.getLayer().toSCX(this.getStartControlX()+offsetX), this.getLayer().toSCY(this.getStartControlY()+offsetY));
@@ -867,8 +872,9 @@ class LineTile extends Tile {
     }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
-        this.strokeWeight = 5;
+        this.strokeWeight = -2;
         this.ignoreRotation = true;
+        this.drawOutlineBefore = true;
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         line(layer.toSCX(sX), layer.toSCY(sY), layer.toSCX(eX), layer.toSCY(eY));
@@ -878,16 +884,24 @@ class LineTile extends Tile {
         return d < 10;
     }
     static fromBlock(block, parent) {
-        let options = getOptions(block.head);
-        return new TileTypeReference[options[0]](ID.getNext(), float(options[1]), float(options[2]), float(options[3]), float(options[4]), int(options[5]), options[6], parent);
+        let options = getOptions(block.head, 7);
+        let lt = super.fromBlock(block, parent);
+        lt.strokeWeight = int(options[7]) || -2;
+        return lt;
     }
+    saveToString(indent) {
+        return super.saveToString(indent) + ` ${this.strokeWeight}`;
+    }
+    getStrokeWeight() {
+        return this.getLayer().getGridSize()*(2**this.strokeWeight);
+    } 
     draw() {
         stroke(this.color);
-        strokeWeight(this.strokeWeight);
+        strokeWeight(this.getStrokeWeight());
         LineTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
     }
     drawOutline(offsetX, offsetY) {
-        strokeWeight(this.strokeWeight*2);
+        strokeWeight(this.getStrokeWeight()+10);
         LineTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
     }
 }
@@ -898,16 +912,29 @@ class CurveTile extends QuadrantTile {
     }
     constructor(ID, startX, startY, endX, endY, rotation, color, parent) {
         super(ID, startX, startY, endX, endY, rotation, color, parent);
-        this.strokeWeight = 5;
+        this.strokeWeight = -2;
+        this.drawOutlineBefore = true;
     }
+    static fromBlock(block, parent) {
+        let options = getOptions(block.head, 7);
+        let lt = super.fromBlock(block, parent);
+        lt.strokeWeight = int(options[7]) || -2;
+        return lt;
+    }
+    saveToString(indent) {
+        return super.saveToString(indent) + ` ${this.strokeWeight}`;
+    }
+    getStrokeWeight() {
+        return this.getLayer().getGridSize()*(2**this.strokeWeight);
+    } 
     draw() {
         noFill();
         stroke(this.color);
-        strokeWeight(this.strokeWeight);
+        strokeWeight(this.getStrokeWeight());
         QuadrantTile.drawRaw(this.startX, this.startY, this.endX, this.endY, this.rotation, this.getLayer());
     }
     drawOutline(offsetX, offsetY) {
-        strokeWeight(this.strokeWeight*2);
+        strokeWeight(this.getStrokeWeight()+10);
         QuadrantTile.drawRaw(this.startX+offsetX, this.startY+offsetY, this.endX+offsetX, this.endY+offsetY, this.rotation, this.getLayer());
     }
     static checkCollision(sX, sY, eX, eY, r, layer, mouseX, mouseY) {

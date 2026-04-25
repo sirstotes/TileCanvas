@@ -52,12 +52,24 @@ class Selection {
         maker.submitActions();
         this.resetOffset();
     }
+    drawOutlinesBefore() {
+        noFill();
+        stroke(0, 0, 255);
+        strokeWeight(3);
+        for(let tile of this.tiles) {
+            if(tile.drawOutlineBefore) {
+                tile.drawOutline(this.displayOffsetX, this.displayOffsetY);
+            }
+        }
+    }
     drawOutlines() {
         noFill();
         stroke(0, 0, 255);
         strokeWeight(3);
         for(let tile of this.tiles) {
-            tile.drawOutline(this.displayOffsetX, this.displayOffsetY);
+            if(!tile.drawOutlineBefore) {
+                tile.drawOutline(this.displayOffsetX, this.displayOffsetY);
+            }
         }
     }
     collidesWith(screenX, screenY)  {

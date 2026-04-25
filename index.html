@@ -21,12 +21,12 @@
       <div class="bar" id="topBar">
         <div class="toolbar">
           <div class="toolbarRow">
-            <button onclick="toggleMenu('menu', this)"><img src="assets/menu-burger.png"></button>
-            <button id="CROP_Button" onclick="setTool('CROP')"><img src="assets/tool-crop.png"></button>
+            <button onclick="toggleMenu('menu', this)"><img src="assets/menu.png"></button>
+            <button id="CROP_Button" onclick="setTool('CROP')"><img src="assets/crop.png"></button>
             <button onclick="undo()"><img src="assets/undo.png"></button>
             <button onclick="redo()"><img src="assets/redo.png"></button>
-            <button id="movementControlsButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/border-all.png"></button>
-            <button id="gridButton" onclick="toggleMenu('movementControls', this)"><img src="assets/arrows.png"></button>
+            <button id="movementControlsButton" class="highlighted" onclick="toggleGrid(this)"><img src="assets/grid.png"></button>
+            <button id="gridButton" onclick="toggleMenu('movementControls', this)"><img src="assets/pan.png"></button>
             <button id="layerMenuButton" onclick="toggleMenu('layers', this)"><img src="assets/layers.png"></button>
           </div>
         </div>
@@ -34,10 +34,10 @@
             <div class="toolbarRow">
               <button oncontextmenu="return false;" id="zoomInButton"><img src="assets/zoom-in.png"></button>
               <button oncontextmenu="return false;" id="zoomOutButton"><img src="assets/zoom-out.png"></button>
-              <button oncontextmenu="return false;" id="panLeftButton"><img src="assets/angle-small-left.png"></button>
-              <button oncontextmenu="return false;" id="panRightButton"><img src="assets/angle-small-right.png"></button>
-              <button oncontextmenu="return false;" id="panUpButton"><img src="assets/angle-small-up.png"></button>
-              <button oncontextmenu="return false;" id="panDownButton"><img src="assets/angle-small-down.png"></button>
+              <button oncontextmenu="return false;" id="panLeftButton"><img src="assets/left.png"></button>
+              <button oncontextmenu="return false;" id="panRightButton"><img src="assets/right.png"></button>
+              <button oncontextmenu="return false;" id="panUpButton"><img src="assets/up.png"></button>
+              <button oncontextmenu="return false;" id="panDownButton"><img src="assets/down.png"></button>
             </div>
         </div>
       </div>
@@ -122,7 +122,7 @@
             <span>
               <input type="color" id="newColorPicker" value="#ff0000">
               <input class="inlineInput" id="newColorText" type="text" value="#ffffff" onclick="this.select()">
-              <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/add.png"></button>
+              <button onclick="addColor(document.getElementById('newColorText').value)"><img src="assets/plus.png"></button>
             </span>
           </div>
         </div>
@@ -130,18 +130,18 @@
       <div class="bar" id="bottomBar">
         <div class="toolbar">
           <div class="toolbarRow">
-            <button onclick="toggleMenu('toolSettings', this)"><img src="assets/settings.png"></button>
+            <button onclick="toggleMenu('toolSettings', this)"><img src="assets/gear.png"></button>
             <button class="shapeButton" id="RECT_Button" onclick="setTool('RECT')"><img src="assets/square.png"></button>
             <button class="shapeButton" id="WEDGE_Button" onclick="setTool('WEDGE')"><img src="assets/wedge.png"></button>
             <!-- <button class="shapeButton" id="ELLIPSE_Button" onclick="setTool('ELLIPSE')"><img src="assets/circle.png"></button> -->
             <button class="shapeButton" id="QUADRANT_Button" onclick="setTool('QUADRANT')"><img src="assets/quadrant.png"></button>
-            <button class="shapeButton" id="INVERSE_QUADRANT_Button" onclick="setTool('INVERSE_QUADRANT')"><img src="assets/inverseQuadrant.png"></button>
-            <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')"><img src="assets/bezierWedge.png"></button>
+            <button class="shapeButton" id="INVERSE_QUADRANT_Button" onclick="setTool('INVERSE_QUADRANT')"><img src="assets/inverse-quadrant.png"></button>
+            <button class="shapeButton" id="BEZIER_WEDGE_Button" onclick="setTool('BEZIER_WEDGE')"><img src="assets/bezier-wedge.png"></button>
             <button class="shapeButton" id="LINE_Button" onclick="setTool('LINE')"><img src="assets/line.png"></button>
             <button class="shapeButton" id="CURVE_Button" onclick="setTool('CURVE')"><img src="assets/curve.png"></button>
-            <button id="ERASE_Button" onclick="setTool('ERASE')"><img src="assets/eraser.png"></button>
-            <button id="PAINT_Button" onclick="setTool('PAINT')"><img src="assets/paint-brush.png"></button>
-            <button id="SELECT_Button" onclick="setTool('SELECT')"><img src="assets/square-dashed.png"></button>
+            <button id="ERASE_Button" onclick="setTool('ERASE')"><img src="assets/erase.png"></button>
+            <button id="PAINT_Button" onclick="setTool('PAINT')"><img src="assets/fill.png"></button>
+            <button id="SELECT_Button" onclick="setTool('SELECT')"><img src="assets/select.png"></button>
           </div>
           <div class="toolbarRow">
             <span id="colorPalette" style="flex-grow: 4;"></span>
@@ -152,20 +152,27 @@
         </div>
         <div class="toolbar extraBar" style="display:none;" id="selectionTools">
           <div class="toolbarRow">
-            <button onclick="cancelSelection()"><img src="assets/cross.png"></button>
-            <button onclick="groupSelection()"><img src="assets/link-alt.png"></button>
-            <button onclick="ungroupSelection()"><img src="assets/link-slash-alt.png"></button>
+            <button onclick="cancelSelection()"><img src="assets/cancel.png"></button>
+            <button onclick="groupSelection()"><img src="assets/group.png"></button>
+            <button onclick="ungroupSelection()"><img src="assets/ungroup.png"></button>
             <button onclick="duplicateSelection()"><img src="assets/copy.png"></button>
-            <button disabled onclick="rotateSelection(1)"><img src="assets/rotate.png"></button>
+            <!-- <button disabled onclick="rotateSelection(1)"><img src="assets/rotate.png"></button>
             <button disabled onclick="rotateSelection(-1)"><img src="assets/rotate-reverse.png"></button>
             <button disabled><img src="assets/reflect-horizontal.png"></button>
-            <button disabled><img src="assets/reflect-vertical.png"></button>
-            <button onclick="backSelection()"><img src="assets/arrow-to-bottom.png"></button>
-            <button onclick="frontSelection()"><img src="assets/arrow-to-top.png"></button>
-            <button onclick="eraseSelection()"><img src="assets/eraser.png"></button>
+            <button disabled><img src="assets/reflect-vertical.png"></button> -->
+            <button onclick="backSelection()"><img src="assets/bottom.png"></button>
+            <button onclick="frontSelection()"><img src="assets/top.png"></button>
+            <button onclick="eraseSelection()"><img src="assets/erase.png"></button>
             <span id="bezierControls">
               <button id="BEZIER_Button" onclick="setTool('BEZIER')"><img src="assets/location-crosshairs.png"></button>
             </span>
+          </div>
+        </div>
+        <div class="toolbar extraBar" style="display:none;" id="lineTools">
+          <div class="toolbarRow">
+            <button onclick="decreaseLineWeight()"><img src="assets/minus.png"></button>
+            <span id="currentLineWeightSpan"></span>
+            <button onclick="increaseLineWeight()"><img src="assets/plus.png"></button>
           </div>
         </div>
       </div>

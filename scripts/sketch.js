@@ -14,11 +14,11 @@ function addColorButtons(color) {
     let parent = document.createElement("span");
     parent.style.display = "flex";
     let upButton = document.createElement("button");
-    upButton.innerHTML = "<img src='assets/angle-small-up.png'>";
+    upButton.innerHTML = "<img src='assets/up.png'>";
     upButton.onclick = () => {moveColorUp(color)};
     upButton.style = "background-color:"+color+";";
     let downButton = document.createElement("button");
-    downButton.innerHTML = "<img src='assets/angle-small-down.png'>";
+    downButton.innerHTML = "<img src='assets/down.png'>";
     downButton.onclick = () => {moveColorDown(color)};
     downButton.style = "background-color:"+color+";";
     let copyButton = document.createElement("button");
@@ -34,7 +34,7 @@ function addColorButtons(color) {
     copyButton.style = "background-color:"+color+";flex-grow:1;";
     let removeButton = document.createElement("button");
     removeButton.onclick = () => {removeColor(color)};
-    removeButton.innerHTML = "<img src='assets/cross-circle.png'>";
+    removeButton.innerHTML = "<img src='assets/minus.png'>";
     removeButton.style = "background-color:"+color+";";
 
     parent.appendChild(upButton);
@@ -248,6 +248,15 @@ function eraseSelection() {
     maker.eraseSelection();
 }
 
+function increaseLineWeight() {
+    Maker.TOOLS["LINE"].increaseStrokeWeight();
+    Maker.TOOLS["CURVE"].increaseStrokeWeight();
+}
+function decreaseLineWeight() {
+    Maker.TOOLS["LINE"].decreaseStrokeWeight();
+    Maker.TOOLS["CURVE"].decreaseStrokeWeight();
+}
+
 function insideCanvas(mouseX, mouseY) {
     return mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height;
 }
@@ -434,7 +443,7 @@ function refreshLayerDisplay() {
             name.onclick = () => {maker.setCurrentLayer(i)};
         node.appendChild(name);
         let downButton = document.createElement("button");
-            downButton.innerHTML = '<img src="assets/angle-small-up.png">';
+            downButton.innerHTML = '<img src="assets/up.png">';
             downButton.onclick = () => {
                 maker.moveLayerDown(maker.layers[i]);
                 refreshLayerDisplay();
@@ -442,28 +451,28 @@ function refreshLayerDisplay() {
         node.appendChild(downButton);
         let showButton = document.createElement("button");
             if(maker.layers[i].hidden) {
-                showButton.innerHTML = '<img src="assets/eye-crossed.png">';
+                showButton.innerHTML = '<img src="assets/eye-closed.png">';
             } else {
-                showButton.innerHTML = '<img src="assets/eye.png">';
+                showButton.innerHTML = '<img src="assets/eye-open.png">';
             }
             showButton.onclick = () => {
                 if(maker.layers[i].hidden) {
-                    showButton.innerHTML = '<img src="assets/eye.png">';
+                    showButton.innerHTML = '<img src="assets/eye-open.png">';
                 } else {
-                    showButton.innerHTML = '<img src="assets/eye-crossed.png">';
+                    showButton.innerHTML = '<img src="assets/eye-closed.png">';
                 }
                 maker.layers[i].hidden = !maker.layers[i].hidden;
             }
         node.appendChild(showButton);
         let upButton = document.createElement("button");
-            upButton.innerHTML = '<img src="assets/angle-small-down.png">';
+            upButton.innerHTML = '<img src="assets/down.png">';
             upButton.onclick = () => {
                 maker.moveLayerUp(maker.layers[i]);
                 refreshLayerDisplay();
             };
         node.appendChild(upButton);
         let settingsButton = document.createElement("button");
-            settingsButton.innerHTML = '<img src="assets/settings.png">';
+            settingsButton.innerHTML = '<img src="assets/gear.png">';
             settingsButton.onclick = () => {
                 let reclick = maker.currentLayer == i;
                 maker.setCurrentLayer(i);
@@ -586,8 +595,12 @@ function draw() {
 
 controlPressed = false;
 shiftPressed = false;
+canvasSelected = false;
 
 function keyPressed() {
+    if(!canvasSelected) {
+        return;
+    }
     switch(key) {
         case 'r':
             setTool("RECT");
@@ -653,9 +666,11 @@ function keyReleased() {
 function mousePressed(event) {
     if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
         clickingOnCanvas = true;
-        document.getElementById("canvasContainer").style.backgroundColor = "var(--white)";
+        canvasSelected = true;
+        document.getElementById("canvasContainer").style.borderColor = "var(--white)";
     } else {
-        document.getElementById("canvasContainer").style.backgroundColor = "var(--gray)";
+        document.getElementById("canvasContainer").style.borderColor = "var(--gray)";
+        canvasSelected = false;
     }
 }
 function mouseReleased(event) {
@@ -672,12 +687,14 @@ function mouseWheel(event) {
 function touchStarted(event) {
     if(event.target == canvas && insideCanvas(getMouseX(), getMouseY()) && mouseButton == "left") {
         clickingOnCanvas = true;
-        document.getElementById("canvasContainer").style.backgroundColor = "var(--highlight-2)";
+        canvasSelected = true;
+        document.getElementById("canvasContainer").style.borderColor = "var(--highlight-2)";
     }
 }
 function touchEnded(event) {
     clickingOnCanvas = false;
-    document.getElementById("canvasContainer").style.backgroundColor = "var(--gray)";
+    canvasSelected = false;
+    document.getElementById("canvasContainer").style.borderColor = "var(--gray)";
 }
 
 let globalMouse = { x: undefined, y: undefined };

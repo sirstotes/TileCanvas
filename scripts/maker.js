@@ -79,6 +79,10 @@ class Maker {//TODO split into maker and canvas
         } else {
             clear();
         }
+        if(this.hasSelection()) {
+            this.selection.drawOutlinesBefore();
+        }
+        this.currentTool.drawBefore(this);
         this.render(this.displayCanvas);
         if(this.shouldDrawGrid) {
             this.getActiveLayer().drawGrid();
