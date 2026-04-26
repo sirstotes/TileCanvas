@@ -3,13 +3,13 @@
   "short_name": "TC",
   "description": "Image maker using geometric shapes!",
   "scope": "/TileCanvas/",
-  "start_url": "/TileCanvas/",
+  "start_url": "/",
   "background_color": "#1e152a",
   "theme_color": "#1e152a",
-  "display": "standalone", 
+  "display": "fullscreen", 
   "icons": [
       {
-        "src": "/TileCanvas/assets/icon.png",
+        "src": "assets/icon.png",
         "type": "image/png",
         "sizes": "128x128"
       }
