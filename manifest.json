@@ -3,15 +3,20 @@
   "short_name": "TC",
   "description": "Image maker using geometric shapes!",
   "scope": "/TileCanvas/",
-  "start_url": "/",
+  "start_url": "https://sirstotes.github.io/TileCanvas/index.html",
   "background_color": "#1e152a",
   "theme_color": "#1e152a",
   "display": "fullscreen", 
   "icons": [
       {
-        "src": "assets/icon.png",
+        "src": "assets/icon192.png",
         "type": "image/png",
-        "sizes": "128x128"
+        "sizes": "192x192"
+      },
+      {
+        "src": "assets/icon512.png",
+        "type": "image/png",
+        "sizes": "512x512"
       }
   ]
 }
