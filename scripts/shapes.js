@@ -618,11 +618,27 @@ class InverseQuadrantTile extends Tile {
     }
     static drawRaw(sX, sY, eX, eY, r, layer) {
         push();
-        let mask = function() {
-            QuadrantTile.drawRaw(sX, sY, eX, eY, (r+2)%4, layer);
-        }
-        clip(mask, { invert: true });
-        RectTile.drawRaw(sX, sY, eX, eY, r, layer);
+        beginClip({invert: true});
+            //QuadrantTile.drawRaw(sX, sY, eX, eY, (r+2)%4, layer);
+            let w = eX - sX + 1;
+            let h = eY - sY + 1;
+            switch(int(r)) {
+                case 0:
+                    ellipse(layer.toSCFX(sX), layer.toSCFY(sY), layer.toSCCX(eX + w), layer.toSCCY(eY + h));
+                    break;
+                case 1:
+                    ellipse(layer.toSCFX(sX - w), layer.toSCFY(sY), layer.toSCCX(eX), layer.toSCCY(eY + h));
+                    break;
+                case 2:
+                    ellipse(layer.toSCFX(sX - w), layer.toSCFY(sY - h), layer.toSCCX(eX), layer.toSCCY(eY));
+                    break;
+                case 3:
+                    ellipse(layer.toSCFX(sX), layer.toSCFY(sY - h), layer.toSCCX(eX + w), layer.toSCCY(eY));
+                    break;
+            }
+            
+        endClip();
+        RectTile.drawRaw(sX, sY, eX, eY, 0, layer);
         pop();
     }
     drawOutline(offsetX, offsetY) {
