@@ -12,6 +12,9 @@
     <script src="scripts/selection.js"></script>
     <script src="scripts/maker.js"></script>
     <script src="scripts/sketch.js"></script>
+
+    <link rel="canonical" href="https://sirstotes.github.io/TileCanvas/" />
+    <link rel="manifest" href="/TileCanvas/manifest.webmanifest">
   </head>
   <body>
     <main>
@@ -177,5 +180,13 @@
         </div>
       </div>
     </div>
+    <script>
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.register (
+            '/TileCanvas/sw.js',
+            {scope: '/TileCanvas/'}
+          )
+        }
+    </script>
   </body>
 </html>
