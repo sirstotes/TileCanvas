@@ -12,7 +12,6 @@ function addColorButtons(color) {
     document.getElementById("colorPalette").appendChild(selectButton);
 
     let parent = document.createElement("span");
-    parent.style.display = "flex";
     let upButton = document.createElement("button");
     upButton.innerHTML = "<img src='assets/up.png'>";
     upButton.onclick = () => {moveColorUp(color)};
@@ -249,12 +248,24 @@ function eraseSelection() {
 }
 
 function increaseLineWeight() {
-    Maker.TOOLS["LINE"].increaseStrokeWeight();
-    Maker.TOOLS["CURVE"].increaseStrokeWeight();
+    if(maker.currentTool == Maker.TOOLS.LINE) {
+        Maker.TOOLS["LINE"].increaseStrokeWeight();
+    } else if (maker.currentTool == Maker.TOOLS.CURVE) {
+        Maker.TOOLS["CURVE"].increaseStrokeWeight();
+    } else if (maker.currentTool == Maker.TOOLS.SELECT) {
+        Maker.TOOLS["LINE"].increaseStrokeWeight();
+        Maker.TOOLS["SELECT"].increaseStrokeWeight();
+    }
 }
 function decreaseLineWeight() {
-    Maker.TOOLS["LINE"].decreaseStrokeWeight();
-    Maker.TOOLS["CURVE"].decreaseStrokeWeight();
+    if(maker.currentTool == Maker.TOOLS.LINE) {
+        Maker.TOOLS["LINE"].decreaseStrokeWeight();
+    } else if (maker.currentTool == Maker.TOOLS.CURVE) {
+        Maker.TOOLS["CURVE"].decreaseStrokeWeight();
+    } else if (maker.currentTool == Maker.TOOLS.SELECT) {
+        Maker.TOOLS["LINE"].decreaseStrokeWeight();
+        Maker.TOOLS["SELECT"].decreaseStrokeWeight();
+    }
 }
 
 function insideCanvas(mouseX, mouseY) {
@@ -576,8 +587,16 @@ function draw() {
         } else {
             document.getElementById("bezierControls").style = "display: none;";
         }
+        if(maker.getSelection().onlyLinesOrCurves()) {
+            document.getElementById("lineTools").style = "";
+        } else {
+            document.getElementById("lineTools").style = "display: none;";
+        }
     } else {
         document.getElementById("selectionTools").style = "display: none;";
+        if(maker.currentTool != Maker.TOOLS.LINE && maker.currentTool != Maker.TOOLS.CURVE) {
+            document.getElementById("lineTools").style = "display: none;";
+        }
     }
 
     if(mouseIsPressed && mouseButton != "left") {

@@ -92,4 +92,15 @@ class Selection {
     onlyBezier() {
         return this.tiles.length == 1 && this.tiles[0] instanceof BezierWedgeTile;
     }
+    onlyLinesOrCurves() {
+        if(this.tiles.length == 0) {
+            return false;
+        }
+        for(let tile of this.tiles) {
+            if (!(tile instanceof LineTile) && !(tile instanceof CurveTile)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -44,6 +44,7 @@ class Maker {//TODO split into maker and canvas
         this.currentAction = -1;
         this.newActions = [];
         this.historySize = 20;
+        this.saving = false;
     }
     addAction(action) {
         this.newActions.push(action);
@@ -78,9 +79,6 @@ class Maker {//TODO split into maker and canvas
             background(this.backgroundColor);
         } else {
             clear();
-        }
-        if(this.hasSelection()) {
-            this.selection.drawOutlinesBefore();
         }
         this.currentTool.drawBefore(this);
         this.render(this.displayCanvas);
@@ -193,7 +191,9 @@ class Maker {//TODO split into maker and canvas
         } else {
             clear();
         }
+        this.saving = true;
         this.render(this.displayCanvas);
+        this.saving = false;
         saveCanvas(fileName+".png");
     }
     setCurrentLayer(index) {
@@ -213,8 +213,11 @@ class Maker {//TODO split into maker and canvas
         return this.layers[this.currentLayer];
     }
     render() {
-        for (let layer of this.layers) {
-            layer.render();
+        for (let i = 0; i < this.layers.length; i ++) {
+            if(!this.saving && i == this.currentLayer && this.hasSelection()) {
+                this.selection.drawOutlinesBefore();
+            }
+            this.layers[i].render();
         }
     }
     clear() {

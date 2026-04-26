@@ -103,7 +103,7 @@ class Layer extends IDObject {
         this.offsetY = false;
     }
     static fromBlock(block, parent) {
-        let options = getOptions(block.head, 5);
+        let options = getOptions(block.head, 6);
         let newLayer = new Layer(ID.getNext(), parent);
         newLayer.name = options[1];
         newLayer.gridScale = int(options[2]);
@@ -446,7 +446,7 @@ class Tile extends TileLike {
         this.drawOutlineBefore = false;
     }
     static fromBlock(block, parent) {
-        let options = getOptions(block.head);
+        let options = getOptions(block.head, 7);
         return new TileTypeReference[options[0]](ID.getNext(), int(options[1]), int(options[2]), int(options[3]), int(options[4]), int(options[5]), options[6], parent);
     }
     saveToString(indent) {
@@ -736,7 +736,7 @@ class BezierWedgeTile extends WedgeTile {
     }
     static fromBlock(block, parent) {
         let newBez = super.fromBlock(block, parent);
-        let options = getOptions(block.head);
+        let options = getOptions(block.head, 11);
         newBez.startControlX = float(options[7]);
         newBez.startControlY = float(options[8]);
         newBez.endControlX = float(options[9]);
@@ -884,9 +884,9 @@ class LineTile extends Tile {
         return d < 10;
     }
     static fromBlock(block, parent) {
-        let options = getOptions(block.head, 7);
+        let options = getOptions(block.head, 8);
         let lt = super.fromBlock(block, parent);
-        lt.strokeWeight = int(options[7]) || -2;
+        lt.strokeWeight = int(options[7]);
         return lt;
     }
     saveToString(indent) {
@@ -916,9 +916,9 @@ class CurveTile extends QuadrantTile {
         this.drawOutlineBefore = true;
     }
     static fromBlock(block, parent) {
-        let options = getOptions(block.head, 7);
+        let options = getOptions(block.head, 8);
         let lt = super.fromBlock(block, parent);
-        lt.strokeWeight = int(options[7]) || -2;
+        lt.strokeWeight = int(options[7]);
         return lt;
     }
     saveToString(indent) {

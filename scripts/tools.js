@@ -437,6 +437,9 @@ class SelectTool extends Tool {
         this.moving = false;
         this.clicking = false;
     }
+    onEnable(maker) {
+        this.maker = maker;
+    }
     draw(maker) {
         if(this.hoveringSelection) {
             cursor(MOVE);
@@ -510,6 +513,16 @@ class SelectTool extends Tool {
                     }
                 }
             }
+        }
+    }
+    increaseStrokeWeight() {
+        for(let tile of this.maker.getSelection().tiles) {
+            tile.strokeWeight = Maker.TOOLS.LINE.strokeWeight;
+        }
+    }
+    decreaseStrokeWeight() {
+        for(let tile of this.maker.getSelection().tiles) {
+            tile.strokeWeight = Maker.TOOLS.LINE.strokeWeight;
         }
     }
 }
