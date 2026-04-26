@@ -4,8 +4,8 @@
   "description": "Image maker using geometric shapes!",
   "scope": "/TileCanvas/",
   "start_url": "/TileCanvas/",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#1e152a",
+  "theme_color": "#1e152a",
   "display": "standalone", 
   "icons": [
       {

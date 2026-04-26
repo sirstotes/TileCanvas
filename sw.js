@@ -1,10 +1,11 @@
 var GHPATH = '/TileCanvas';
-var APP_PREFIX = 'srststlc_';
-var VERSION = 'version_00';
+var APP_PREFIX = 'tlc_';
+var VERSION = 'version_000';
 var URLS = [    
   `${GHPATH}/`,
   `${GHPATH}/index.html`,
   `${GHPATH}/style.css`,
+  `${GHPATH}/scripts/p5.min.js`,
   `${GHPATH}/scripts/actions.js`,
   `${GHPATH}/scripts/maker.js`,
   `${GHPATH}/scripts/selection.js`,
