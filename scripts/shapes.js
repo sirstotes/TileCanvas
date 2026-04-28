@@ -96,11 +96,9 @@ class Layer extends IDObject {
         super(id);
         this.name = "Layer "+tileCanvas.layers.length;
         this.children = [];
-        this.gridScale = 0;
+        this.gridScale = 1;
         this.canvas = tileCanvas;
         this.hidden = false;
-        this.offsetX = false;
-        this.offsetY = false;
     }
     static fromBlock(block, parent) {
         let options = getOptions(block.head, 6);
@@ -108,15 +106,13 @@ class Layer extends IDObject {
         newLayer.name = options[1];
         newLayer.gridScale = int(options[2]);
         newLayer.hidden = (options[3].toLowerCase() === "true");
-        newLayer.offsetX = (options[4].toLowerCase() === "true");
-        newLayer.offsetY = (options[5].toLowerCase() === "true");
         for(let childBlock of block.children) {
             newLayer.addChild(TileTypeReference[childBlock.head.split(" ")[0]].fromBlock(childBlock, newLayer));
         }
         return newLayer;
     }
     saveToString(indent) {
-        let str = ('\t'.repeat(indent)) + `Layer '${this.name}' ${this.gridScale} ${this.hidden} ${this.offsetX} ${this.offsetY}`;
+        let str = ('\t'.repeat(indent)) + `Layer '${this.name}' ${this.gridScale} ${this.hidden}`;
         for(let child of this.children) {
             str += "\n" + child.saveToString(indent + 1);
         }
@@ -130,41 +126,47 @@ class Layer extends IDObject {
             }
         }
     }
-    getOffsetX() {
-        return this.offsetX ? 0.5 : 0;
+    toLC(x) {//To Layer Coordinate (From Screen)
+        return round(x / this.getResolution());
     }
-    getOffsetY() {
-        return this.offsetY ? 0.5 : 0;
+    toLCF(x) {//To Layer Coordinate (From Screen)
+        return floor(x / this.getResolution());
     }
-    toLCX(x) {//To Layer Coordinate (From Screen)
-        return round((x - (this.getOffsetX()) * this.getGridSize())/this.getGridSize());
+    toStart(x) {//Moves the value to the start of the nearest grid line
+        return floor(x / (2**this.gridScale)) * (2**this.gridScale)
     }
-    toLCFX(x) {//To Layer Coordinate (From Screen)
-        return floor((x - (this.getOffsetX()) * this.getGridSize())/this.getGridSize());
+    toEnd(x) {//Moves the value to the end of the nearest grid line
+        return floor(x / (2**this.gridScale)) * (2**this.gridScale) + (2**this.gridScale) - 1
+    }
+    toLCC(x) {//To Layer Coordinate (From Screen)
+        return ceil(x / this.getGridSize()) * (2**this.gridScale);
     }
     toLCY(y) {//To Layer Coordinate (From Screen)
-        return round((y - (this.getOffsetY()) * this.getGridSize())/this.getGridSize());
+        return round(y / this.getGridSize()) * (2**this.gridScale);
     }
     toLCFY(y) {//To Layer Coordinate (From Screen)
-        return floor((y - (this.getOffsetY()) * this.getGridSize())/this.getGridSize());
+        return floor(y / this.getGridSize()) * (2**this.gridScale);
     }
     toSCX(x) {//To Screen Coordinate
-        return (x + this.getOffsetX()) * this.getGridSize();
+        return x * this.getResolution();
     }
     toSCFX(x) {//To Screen Coordinate Floored
-        return (floor(x + 0.5) + this.getOffsetX()) * this.getGridSize();
+        return floor(x + 0.5) * this.getResolution();
     }
     toSCCX(x) {//To Screen Coordinate Ceiling'd
-        return (ceil(x + 0.5) + this.getOffsetX()) * this.getGridSize();
+        return ceil(x + 0.5) * this.getResolution();
     }
     toSCY(y) {//To Screen Coordinate
-        return (y + this.getOffsetY()) * this.getGridSize();
+        return y * this.getResolution();
     }
     toSCFY(y) {//To Screen Coordinate Floored
-        return (floor(y + 0.5) + this.getOffsetY()) * this.getGridSize();
+        return floor(y + 0.5) * this.getResolution();
     }
     toSCCY(y) {//To Screen Coordinate Ceiling'd
-        return (ceil(y + 0.5) + this.getOffsetY()) * this.getGridSize();
+        return ceil(y + 0.5) * this.getResolution();
+    }
+    getResolution() {
+        return this.canvas.resolution;
     }
     getGridSize() {
         return (2**this.gridScale) * this.canvas.resolution;
@@ -218,9 +220,9 @@ class Layer extends IDObject {
     }
     drawGrid() {
         strokeWeight(1);
-        let midX = width/2 + this.getOffsetX() * this.getGridSize();
-        let midY = height/2 + this.getOffsetY() * this.getGridSize();
-        for (let x = this.getOffsetX() * this.getGridSize(); x < width; x += this.getGridSize()) {
+        let midX = width/2;
+        let midY = height/2;
+        for (let x = 0; x < width; x += this.getGridSize()) {
             if(x == midX) {
                 stroke(100);
             } else {
@@ -228,7 +230,7 @@ class Layer extends IDObject {
             }
             line(x, 0, x, height);
         }
-        for (let y = this.getOffsetY() * this.getGridSize(); y < height; y += this.getGridSize()) {
+        for (let y = 0; y < height; y += this.getGridSize()) {
             if(y == midY) {
                 stroke(100);
             } else {
@@ -909,7 +911,7 @@ class LineTile extends Tile {
         return super.saveToString(indent) + ` ${this.strokeWeight}`;
     }
     getStrokeWeight() {
-        return this.getLayer().getGridSize()*(2**this.strokeWeight);
+        return this.getLayer().getResolution()*(2**this.strokeWeight);
     } 
     draw() {
         stroke(this.color);
@@ -941,7 +943,7 @@ class CurveTile extends QuadrantTile {
         return super.saveToString(indent) + ` ${this.strokeWeight}`;
     }
     getStrokeWeight() {
-        return this.getLayer().getGridSize()*(2**this.strokeWeight);
+        return this.getLayer().getResolution()*(2**this.strokeWeight);
     } 
     draw() {
         noFill();
