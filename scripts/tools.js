@@ -74,10 +74,10 @@ class DraggableTool extends Tool {
         return this.layer.toEnd(max(this.startY, this.endY));
     }
     getXOffset(screenX) {
-        return this.layer.toLCF(mouseX) - this.startX;
+        return this.layer.toLCF(screenX) - this.startX;
     }
     getYOffset(screenY) {
-        return this.layer.toLCF(mouseY) - this.startY;
+        return this.layer.toLCF(screenY) - this.startY;
     }
     startEndEqual() {
         return this.getStartX() == this.getStartY() && this.getEndX() == this.getEndY();
