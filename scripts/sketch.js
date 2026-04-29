@@ -227,8 +227,29 @@ function ungroupSelection() {
     maker.ungroupSelection();
 }
 
-function duplicateSelection() {
-    maker.duplicateSelection();
+function copySelection() {
+    maker.copySelection();
+}
+
+function clearClipboard() {
+    maker.clearClipboard();
+}
+
+function paste() {
+    maker.paste();
+}
+
+function onCopy(event) {
+    maker.copySelection();
+}
+
+function onPaste(event) {
+    let data = event.clipboardData.getData('text/plain');
+    if(data.length > 0) {
+        if(data.startsWith('TC CLIPBOARD:\n')) {
+            maker.loadText(data);
+        }
+    }
 }
 
 function backSelection() {
@@ -458,7 +479,15 @@ function refreshLayerDisplay() {
             name.style.gridArea = "label";
             name.classList.add("inlineInput");
             name.innerText = maker.layers[i].name;
-            name.onclick = () => {maker.setCurrentLayer(i)};
+            name.onclick = () => {
+                if(maker.currentLayer == i) {
+                    maker.selectActiveLayer();
+                } else {
+                    maker.setCurrentLayer(i);
+                }
+            };
+            name.addEventListener('paste', onPaste);
+            name.addEventListener('copy', onCopy);
         node.appendChild(name);
         let downButton = document.createElement("button");
             downButton.innerHTML = '<img src="assets/up.png">';
@@ -550,6 +579,14 @@ function setup() {
         element.addEventListener("contextmenu", (e) => e.preventDefault());
     }
 
+    canvas.addEventListener('copy', onCopy);
+    document.getElementById("canvasContainer").addEventListener('copy', onCopy);
+    document.getElementById("SELECT_Button").addEventListener('copy', onCopy);
+
+    canvas.addEventListener('paste', onPaste);
+    document.getElementById("canvasContainer").addEventListener('paste', onPaste);
+    document.getElementById("SELECT_Button").addEventListener('paste', onPaste);
+
     setTool("RECT");
     setToolOption("REPLACEMENT_MODE", document.getElementById("replacementModeSelect").value);
     setToolOption("DRAG_MODE", document.getElementById("placementModeSelect").value);
@@ -604,6 +641,14 @@ function draw() {
         if(maker.currentTool != Maker.TOOLS.LINE && maker.currentTool != Maker.TOOLS.CURVE) {
             document.getElementById("lineTools").style = "display: none;";
         }
+    }
+
+    if(maker.clipboard.length > 0) {
+        if(document.getElementById("pasteTools").style.display == 'none' && maker.clipboard.startsWith('TC CLIPBOARD:\n')) {
+            document.getElementById("pasteTools").style = '';
+        }
+    } else {
+        document.getElementById("pasteTools").style.display = 'none';
     }
 
     if(mouseIsPressed && mouseButton != "left") {
@@ -730,10 +775,15 @@ window.addEventListener('mousemove', (event) => {
     globalMouse = { x: event.clientX, y: event.clientY };
 });
 
-window.addEventListener('beforeunload',(event) =>{
+window.addEventListener('beforeunload',(event) => {
     localStorage.setItem('autosave', maker.saveToString());
     localStorage.setItem('palette', palette);
 });
+
+window.setInterval(() => {
+    localStorage.setItem('autosave', maker.saveToString());
+    localStorage.setItem('palette', palette);
+}, 60000);//Autosave every minute
 
 window.addEventListener('gesturestart', function(e) {
   e.preventDefault();

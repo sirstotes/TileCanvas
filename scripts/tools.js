@@ -26,6 +26,9 @@ class Tool {
     drawBefore(maker) {}
     draw(maker) {}
     update(maker, mouseX, mouseY, mousePressed) {}
+    setLayer(layer) {
+        this.layer = layer;
+    }
     onEnable(maker) {
         this.maker = maker;
         this.layer = maker.getActiveLayer();
@@ -82,6 +85,10 @@ class DraggableTool extends Tool {
     onMousePressed(maker, mouseX, mouseY, mouseMoving) {
         this.clickMouseX = mouseX;
         this.clickMouseY = mouseY;
+        if(mouseMoving) {
+            this.dragging = true;
+            this.setStart(mouseX, mouseY);
+        }
     }
     onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
         this.dragging = false;
@@ -91,7 +98,7 @@ class DraggableTool extends Tool {
             this.dragging = mousePressed;
         } else {
             this.setStart(mouseX, mouseY);
-            if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && this.clickMouseX != mouseX && this.clickMouseY != mouseY && mousePressed) {
+            if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && (this.clickMouseX != mouseX || this.clickMouseY != mouseY) && mousePressed) {
                 this.dragging = true;
             }
         }
@@ -164,13 +171,13 @@ class ShapeTool extends DraggableTool {
             let cmx = this.layer.toSCX(this.layer.toMiddle(this.startX));
             let cmy = this.layer.toSCY(this.layer.toMiddle(this.startY));
             if (mouseX > cmx && mouseY > cmy) {
-                this.rotation = 0;
-            } else if (mouseX < cmx && mouseY > cmy) {
-                this.rotation = 1;
-            } else if (mouseX < cmx && mouseY < cmy) {
                 this.rotation = 2;
-            } else if (mouseX > cmx && mouseY < cmy) {
+            } else if (mouseX < cmx && mouseY > cmy) {
                 this.rotation = 3;
+            } else if (mouseX < cmx && mouseY < cmy) {
+                this.rotation = 0;
+            } else if (mouseX > cmx && mouseY < cmy) {
+                this.rotation = 1;
             }
         }
     }

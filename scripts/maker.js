@@ -23,12 +23,13 @@ class Maker {//TODO split into maker and canvas
         for(let i = 0; i < layers; i ++) {
             this.layers.push(new Layer(ID.getNext(), this));
         }
+        this.currentLayer = 0;
         this.shouldDrawGrid = true;
         this.currentTool = Maker.TOOLS.RECT;
         this.currentTool.onEnable(this);
         this.currentColor = '#000000';
-        this.currentLayer = 0;
         this.movingSelection = false;
+        this.clipboard = '';
         this.selection = null;
         this.dragging = false;
         this.pMousePressed = false;
@@ -161,8 +162,12 @@ class Maker {//TODO split into maker and canvas
         this.saving = false;
         saveCanvas(fileName+".png");
     }
+    selectActiveLayer() {
+        this.selection = new Selection([...this.getActiveLayer().children]);
+    }
     setCurrentLayer(index) {
         this.currentLayer = index;
+        this.currentTool.setLayer(this.layers[this.currentLayer]);
         refreshLayerSettings(this.layers[this.currentLayer]);
         refreshLayerDisplay();
     }
@@ -192,6 +197,8 @@ class Maker {//TODO split into maker and canvas
         this.newActions = [];
         this.currentAction = -1;
         this.layers = [new Layer(ID.getNext(), this)];
+        this.currentLayer = 0;
+        this.currentTool.setLayer(this.layers[this.currentLayer]);
         this.selection = undefined;
     }
     setColor(color) {
@@ -306,7 +313,7 @@ class Maker {//TODO split into maker and canvas
 
     addClones(shape) {
         if(shape instanceof Tile) {
-            this.addAction(new AddTileAction(ID.getNext(), shape.constructor, shape.startX+1, shape.startY+1, shape.endX+1, shape.endY+1, shape.rotation, shape.color, this.getActiveLayer().ID))
+            this.addAction(new AddTileAction(ID.getNext(), shape.constructor, shape.startX+1, shape.startY+1, shape.endX+1, shape.endY+1, shape.rotation, shape.color, this.getActiveLayer().ID));
         } else if (shape instanceof Group) {
             for(let child of shape.children) {
                 this.addClones(child);
@@ -314,15 +321,25 @@ class Maker {//TODO split into maker and canvas
         }
     }
 
-    duplicateSelection() {
+    copySelection() {
+        let t = "TC CLIPBOARD:\n";
         for(let shape of this.selection.tiles) {
-            this.addClones(shape);
+            t += shape.saveToString(1) + '\n';
         }
-        let returns = this.submitActions();
-        if(returns != null) {
-            let newSelection = returns.map((tileID) => ID.getOrNull(tileID)).filter((tile) => tile != null);
-            this.selection = new Selection(newSelection);
-        }
+        console.log("COPIED", t);
+        this.clipboard = t;
+        navigator.clipboard.writeText(t);
+    }
+    clearClipboard() {
+        this.clipboard = '';
+    }
+    loadText(text) {
+        this.addAction(new LoadTileAction(this.getActiveLayer(), text, true));
+        let res = this.submitActions();
+        this.selection = new Selection(res);
+    }
+    paste() {
+        this.loadText(this.clipboard);
     }
 
     backSelection() {
