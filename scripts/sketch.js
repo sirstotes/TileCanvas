@@ -429,6 +429,12 @@ function initializeLayerSettings() {
         menu.style.display = "none";
         menu.currentLayer = null;
     }
+    document.getElementById("mergeLayerButton").onclick = () => {
+        maker.addAction(new MergeLayerAction(menu.currentLayer));
+        maker.submitActions();
+        menu.style.display = "none";
+        menu.currentLayer = null;
+    }
 }
 
 function refreshLayerSettings(layer) {
@@ -437,7 +443,8 @@ function refreshLayerSettings(layer) {
     document.getElementById("layerScaleRange").value = layer.gridScale;
     document.getElementById("layerOffsetXCheckbox").checked = layer.offsetX;
     document.getElementById("layerOffsetYCheckbox").checked = layer.offsetY;
-    document.getElementById("layerRemoveButton").disabled = maker.layers.length == 1;
+    document.getElementById("mergeLayerButton").disabled = maker.layers.indexOf(layer) < 1;
+    document.getElementById("layerRemoveButton").disabled = maker.layers.length < 2;
 }
 
 function refreshLayerDisplay() {

@@ -109,6 +109,38 @@ class RemoveLayerAction extends Action {
         refreshLayerDisplay();
     }
 }
+class MergeLayerAction extends Action {
+    constructor(layer, lowerLayer) {
+        super("MERGE LAYER");
+        this.layerID = layer.ID;
+        this.topLayerIndex = maker.layers.indexOf(layer);
+        this.lowerLayerID = maker.layers[this.topLayerIndex - 1].ID;
+        this.startIndex = maker.layers[this.topLayerIndex - 1].children.length;
+    }
+    toString() {
+        return `${this.name} ${this.layerID} ${this.lowerLayerID}`;
+    }
+    run() {
+        ID.withObject(this.layerID, (layer) => {
+            ID.withObject(this.lowerLayerID, (lowerLayer) => {
+                lowerLayer.children = lowerLayer.children.concat(layer.children);
+                layer.forEach(child => child.parent = lowerLayer);
+            });
+            maker.removeLayer(layer);
+        });
+        refreshLayerDisplay();
+    }
+    undo() {
+        let newLayer = new Layer(this.layerID, maker);
+        ID.withObject(this.lowerLayerID, (lowerLayer) => {
+            let children = lowerLayer.children.splice(this.startIndex);
+            children.forEach(child => child.parent = newLayer);
+            newLayer.children = children;
+        });
+        maker.layers.splice(this.topLayerIndex, 0, newLayer);
+        refreshLayerDisplay();
+    }
+}
 class AddTileAction extends Action {
     constructor(tileID, type, startX, startY, endX, endY, rotation, color, layerID) {
         super("ADD");
