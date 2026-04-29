@@ -31,9 +31,9 @@ class Tool {
         this.layer = maker.getActiveLayer();
     }
     onDisable(maker) {}
-    onMousePressed(maker) {}
-    onMouseReleased(maker) {}
-    onDrag(maker) {}
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {}
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {}
+    onDrag(maker, mouseX, mouseY) {}
     onDragStart(maker) {}
     onDragEnd(maker) {}
     onTileChange(maker) {}
@@ -70,11 +70,20 @@ class DraggableTool extends Tool {
     getEndY() {
         return this.layer.toEnd(max(this.startY, this.endY));
     }
-    onMousePressed(maker, mouseX, mouseY) {
+    getXOffset(screenX) {
+        return this.layer.toLCF(mouseX) - this.startX;
+    }
+    getYOffset(screenY) {
+        return this.layer.toLCF(mouseY) - this.startY;
+    }
+    startEndEqual() {
+        return this.getStartX() == this.getStartY() && this.getEndX() == this.getEndY();
+    }
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
         this.clickMouseX = mouseX;
         this.clickMouseY = mouseY;
     }
-    onMouseReleased(maker) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
         this.dragging = false;
     }
     update(maker, mouseX, mouseY, mousePressed) {
@@ -126,46 +135,42 @@ class ShapeTool extends DraggableTool {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && (!window.mobileAndTabletCheck() || clickingOnCanvas)) {
             strokeWeight(0);
             fill(maker.getColor());
-            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getActiveLayer());
+            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, this.layer);
         }
     }
-    onMousePressed(maker, mouseX, mouseY) {
-        super.onMousePressed(maker, mouseX, mouseY);
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
+        super.onMousePressed(maker, mouseX, mouseY, mouseMoving);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getColor(), maker.getActiveLayer());
+            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getColor(), this.layer);
             maker.submitActions();
         }
     }
-    onMouseReleased(maker, mouseX, mouseY) {
-        super.onMouseReleased(maker, mouseX, mouseY);
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
-            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getColor(), maker.getActiveLayer());
+            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getColor(), this.layer);
             maker.submitActions();
         }
     }
     onTileChange(maker) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW && clickingOnCanvas) {
-            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+            this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, this.rotation, maker.getColor(), this.layer);
             maker.submitActions();
         }
     }
     update(maker, mouseX, mouseY, mousePressed) {
         super.update(maker, mouseX, mouseY, mousePressed);
         if(Tool.ROTATION_MODE == Tool.ROTATION_MODE_OPTIONS.DRAG) {
-            let cmx = maker.getActiveLayer().toSCX(maker.getActiveLayer().toLC(maker.currentStartMouseX));
-            let cmy = maker.getActiveLayer().toSCY(maker.getActiveLayer().toLC(maker.currentStartMouseY));
+            let cmx = this.layer.toSCX(this.layer.toMiddle(this.startX));
+            let cmy = this.layer.toSCY(this.layer.toMiddle(this.startY));
             if (mouseX > cmx && mouseY > cmy) {
                 this.rotation = 0;
-                maker.setRotation(0);
             } else if (mouseX < cmx && mouseY > cmy) {
                 this.rotation = 1;
-                maker.setRotation(1);
             } else if (mouseX < cmx && mouseY < cmy) {
                 this.rotation = 2;
-                maker.setRotation(2);
             } else if (mouseX > cmx && mouseY < cmy) {
                 this.rotation = 3;
-                maker.setRotation(3);
             }
         }
     }
@@ -200,13 +205,33 @@ class LineTool extends ShapeTool {
         this.maxStrokeWeight = 0;
     }
     getStrokeWeight(layer) {
-        return layer.getGridSize()*(2**this.strokeWeight);
+        return layer.getResolution()*(2**this.strokeWeight);
     }
     increaseStrokeWeight() {
         this.strokeWeight = min(this.strokeWeight + 1, this.maxStrokeWeight);
     }
     decreaseStrokeWeight() {
         this.strokeWeight = max(this.strokeWeight - 1, this.minStrokeWeight);
+    }
+    setStart(mouseX, mouseY) {
+        this.startX = this.layer.toLC(mouseX);
+        this.startY = this.layer.toLC(mouseY);
+    }
+    setEnd(mouseX, mouseY) {
+        this.endX = this.layer.toLC(mouseX);
+        this.endY = this.layer.toLC(mouseY);
+    }
+    getStartX() {
+        return this.layer.toNearest(this.startX);
+    }
+    getStartY() {
+        return this.layer.toNearest(this.startY);
+    }
+    getEndX() {
+        return this.layer.toNearest(this.endX);
+    }
+    getEndY() {
+        return this.layer.toNearest(this.endY);
     }
     place(maker, sX, sY, eX, eY, r, c, layer) {
         //TODO: redo this maybe?
@@ -237,44 +262,24 @@ class LineTool extends ShapeTool {
             maker.addAction(new ModifyTileAction(tID, "strokeWeight", -2, this.strokeWeight));
         }
     }
-    getStartX() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseX);
-    }
-    getStartY() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentStartMouseY);
-    }
-    getEndX() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseX);
-    }
-    getEndY() {
-        return this.maker.getActiveLayer().toLC(this.maker.currentEndMouseY);
-    }
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
-            strokeWeight(this.getStrokeWeight(maker.getActiveLayer()));
+            strokeWeight(this.getStrokeWeight(this.layer));
             stroke(maker.getColor());
-            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, maker.getActiveLayer());
+            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, this.layer);
         }
     }
     onEnable(maker) {
-        this.maker = maker;
+        super.onEnable(maker);
         document.getElementById("lineTools").style.display = "";
     }
     onDisable(maker) {
         document.getElementById("lineTools").style.display = "none";
     }
-    onMousePressed(maker) {
-        
-    }
-    onMouseReleased(maker) {
-        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, maker.getColor(), maker.getActiveLayer());
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
+        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), 0, maker.getColor(), this.layer);
         maker.submitActions();
-    }
-    onTileChange(maker) {
-        
-    }
-    update(maker, mouseX, mouseY, mousePressed) {
-
     }
 }
 class CurveTool extends ShapeTool {
@@ -285,7 +290,7 @@ class CurveTool extends ShapeTool {
         this.maxStrokeWeight = 0;
     }
     getStrokeWeight(layer) {
-        return layer.getGridSize()*(2**this.strokeWeight);
+        return layer.getResolution()*(2**this.strokeWeight);
     }
     increaseStrokeWeight() {
         this.strokeWeight = min(this.strokeWeight + 1, this.maxStrokeWeight);
@@ -325,23 +330,21 @@ class CurveTool extends ShapeTool {
     draw(maker) {
         if(!window.mobileAndTabletCheck() || clickingOnCanvas) {
             noFill();
-            strokeWeight(this.getStrokeWeight(maker.getActiveLayer()));
+            strokeWeight(this.getStrokeWeight(this.layer));
             stroke(maker.getColor());
-            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getActiveLayer());
+            this.shapeType.drawRaw(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, this.layer);
         }
     }
     onEnable(maker) {
-        this.maker = maker;
+        super.onEnable(maker);
         document.getElementById("lineTools").style.display = "";
     }
     onDisable(maker) {
         document.getElementById("lineTools").style.display = "none";
     }
-    onMousePressed(maker) {
-        
-    }
-    onMouseReleased(maker) {
-        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), maker.getRotation(), maker.getColor(), maker.getActiveLayer());
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
+        this.place(maker, this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY(), this.rotation, maker.getColor(), this.layer);
         maker.submitActions();
     }
     onTileChange(maker) {
@@ -354,7 +357,7 @@ class EraseTool extends DraggableTool {
         super("ERASE");
     }
     drawBefore(maker) {
-        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || maker.startEndEqual()) {
+        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || this.startEndEqual()) {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
                 if(tile.drawOutlineBefore) {
                     noFill();
@@ -370,7 +373,7 @@ class EraseTool extends DraggableTool {
         stroke(255, 0, 0);
         strokeWeight(3);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && this.dragging) {
-            let al = maker.getActiveLayer();
+            let al = this.layer;
             line(al.toSCFX(this.getStartX()), al.toSCFY(this.getStartY()), al.toSCCX(this.getEndX()), al.toSCCY(this.getEndY()));
             line(al.toSCCX(this.getEndX()), al.toSCFY(this.getStartY()), al.toSCFX(this.getStartX()), al.toSCCY(this.getEndY()));
             rect(al.toSCFX(this.getStartX()), al.toSCFY(this.getStartY()), al.toSCCX(this.getEndX()), al.toSCCY(this.getEndY()));
@@ -382,27 +385,27 @@ class EraseTool extends DraggableTool {
             });
         }
     }
-    onMousePressed(maker, mouseX, mouseY) {
-        super.onMousePressed(maker, mouseX, mouseY);
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
+        super.onMousePressed(maker, mouseX, mouseY, mouseMoving);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+            maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                 maker.addAction(new RemoveTileAction(tile));
                 maker.submitActions();
             });
         }
     }
-    onDrag(maker) {
+    onDrag(maker, mouseX, mouseY) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+            maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                 maker.addAction(new RemoveTileAction(tile));
                 maker.submitActions();
             });
         }
     }
-    onMouseReleased(maker, mouseX, mouseY) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
             if(!this.dragging) {
-                maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+                maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                     maker.addAction(new RemoveTileAction(tile));
                     maker.submitActions();
                 });
@@ -417,16 +420,16 @@ class EraseTool extends DraggableTool {
                 });
             }
         }
-        super.onMouseReleased(maker, mouseX, mouseY);
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
     }
 }
 
-class PaintTool extends Tool {
+class PaintTool extends DraggableTool {
     constructor() {
         super("PAINT");
     }
     drawBefore(maker) {
-        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || maker.startEndEqual()) {
+        if(Tool.DRAG_MODE != Tool.DRAG_MODE_OPTIONS.AREA || this.startEndEqual()) {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
                 if(tile.drawOutlineBefore) {
                     noFill();
@@ -441,8 +444,8 @@ class PaintTool extends Tool {
         noFill();
         stroke(maker.getColor());
         strokeWeight(3);
-        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && !maker.startEndEqual()) {
-            let al = maker.getActiveLayer();
+        if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA && this.dragging) {
+            let al = this.layer;
             rect(al.toSCFX(this.getStartX()), al.toSCFY(this.getStartY()), al.toSCCX(this.getEndX()), al.toSCCY(this.getEndY()));
         } else {
             maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
@@ -452,26 +455,27 @@ class PaintTool extends Tool {
             });
         }
     }
-    onMousePressed(maker) {
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
+        super.onMousePressed(maker, mouseX, mouseY, mouseMoving);
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+            maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                 maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
                 maker.submitActions();
             });
         }
     }
-    onDrag(maker) {
+    onDrag(maker, mouseX, mouseY) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.DRAW) {
-            maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+            maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                 maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
                 maker.submitActions();
             });
         }
     }
-    onMouseReleased(maker) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
         if(Tool.DRAG_MODE == Tool.DRAG_MODE_OPTIONS.AREA) {
-            if(maker.startEndEqual()) {
-                maker.firstCollidingInSelection(getMouseX(), getMouseY(), (tile) => {
+            if(!this.dragging) {
+                maker.firstCollidingInSelection(mouseX, mouseY, (tile) => {
                     maker.addAction(new ModifyTileAction(tile.ID, "color", tile.color, maker.getColor()));
                     maker.submitActions();
                 });
@@ -487,18 +491,16 @@ class PaintTool extends Tool {
                 maker.submitActions();
             }
         }
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
     }
 }
 
-class SelectTool extends Tool {
+class SelectTool extends DraggableTool {
     constructor() {
         super("SELECT");
         this.hoveringSelection = false;
         this.moving = false;
         this.clicking = false;
-    }
-    onEnable(maker) {
-        this.maker = maker;
     }
     draw(maker) {
         if(this.hoveringSelection) {
@@ -506,40 +508,42 @@ class SelectTool extends Tool {
         } else {
             cursor(ARROW);
         }
-        if(!this.moving && this.clicking) {
+        if(!this.moving && this.dragging) {
             noFill();
             stroke(255, 0, 0);
             strokeWeight(3);
             drawingContext.setLineDash([10, 10]);
-            let al = maker.getActiveLayer();
+            let al = this.layer;
             rect(al.toSCFX(this.getStartX()), al.toSCFY(this.getStartY()), al.toSCCX(this.getEndX()), al.toSCCY(this.getEndY()));
             drawingContext.setLineDash([]);
         }
     }
     update(maker, mouseX, mouseY, mousePressed) {
+        super.update(maker, mouseX, mouseY, mousePressed);
         this.clicking = mousePressed;
         if(maker.hasSelection()) {
-            if(maker.getSelection().collidesWith(getMouseX(), getMouseY())) {
+            if(maker.getSelection().collidesWith(mouseX, mouseY)) {
                 this.hoveringSelection = true;
             } else {
                 this.hoveringSelection = false;
             }
         }
     }
-    onDrag(maker) {
+    onDrag(maker, mouseX, mouseY) {
         if(this.moving && maker.hasSelection()) {
-            maker.getSelection().setOffset(maker.getXOffset(), maker.getYOffset());
+            maker.getSelection().setOffset(this.getXOffset(mouseX), this.getYOffset(mouseY));
         }
     }
     onDisable() {
         cursor(ARROW);
     }
-    onMousePressed(maker) {
-        if(this.hoveringSelection || (maker.hasSelection() && maker.getSelection().collidesWith(getMouseX(), getMouseY()))) {
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
+        super.onMousePressed(maker, mouseX, mouseY, mouseMoving);
+        if(this.hoveringSelection || (maker.hasSelection() && maker.getSelection().collidesWith(mouseX, mouseY))) {
             this.moving = true;
         }
     }
-    onMouseReleased(maker) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
         if(this.moving && maker.hasSelection()) {
             this.moving = false;
             maker.getSelection().applyOffset(maker);
@@ -555,18 +559,18 @@ class SelectTool extends Tool {
                     }
                     maker.cancelSelection();
                 }
-                if(maker.startEndEqual()) {
-                    maker.firstColliding(getMouseX(), getMouseY(), (tile) => {
+                if(!this.dragging) {
+                    maker.firstColliding(mouseX, mouseY, (tile) => {
                         maker.getOrCreateSelection().add(tile);
                     });
                 } else if(Tool.SELECTION_MODE == Tool.SELECTION_MODE_OPTIONS.CONTAIN) {
-                    for(let tile of maker.getActiveLayer().children) {
+                    for(let tile of this.layer.children) {
                         if(tile.fitsWithin(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY())) {
                             maker.getOrCreateSelection().add(tile);
                         }
                     }
                 } else {
-                    for(let tile of maker.getActiveLayer().children) {
+                    for(let tile of this.layer.children) {
                         if(tile.overlapsWith(this.getStartX(), this.getStartY(), this.getEndX(), this.getEndY())) {
                             maker.getOrCreateSelection().add(tile);
                         }
@@ -574,6 +578,7 @@ class SelectTool extends Tool {
                 }
             }
         }
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
     }
     increaseStrokeWeight() {
         for(let tile of this.maker.getSelection().tiles) {
@@ -603,8 +608,8 @@ class ColorSelectTool extends Tool {
     onEnable(maker) {
         this.previousTool = maker.currentTool; 
     }
-    onMouseReleased(maker) {
-        maker.firstColliding(getMouseX(), getMouseY(), (tile) => {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        maker.firstColliding(mouseX, mouseY, (tile) => {
             setColor(tile.color);
             setTool(this.previousTool.name);
             console.log(this.previousTool.name);
@@ -612,7 +617,7 @@ class ColorSelectTool extends Tool {
     }
 }
 
-class BezierTool extends Tool {
+class BezierTool extends DraggableTool {
     constructor () {
         super("BEZIER");
         this.hovering = 0;
@@ -620,6 +625,7 @@ class BezierTool extends Tool {
         this.bezierTile;
     }
     onEnable(maker) {
+        super.onEnable(maker);
         this.bezierTile = maker.getSelection().tiles[0];
     }
     draw(maker) {
@@ -630,8 +636,9 @@ class BezierTool extends Tool {
         }
     }
     update(maker, mouseX, mouseY, mousePressed) {
+        super.update(maker, mouseX, mouseY, mousePressed);
         if(!this.moving) {
-            let al = maker.getActiveLayer();
+            let al = this.layer;
             if(dist(mouseX, mouseY, al.toSCFX(this.bezierTile.getStartControlX()), al.toSCFY(this.bezierTile.getStartControlY())) < al.getGridSize()) {
                 this.hovering = 1;
             } else if(dist(mouseX, mouseY, al.toSCFX(this.bezierTile.getEndControlX()), al.toSCFY(this.bezierTile.getEndControlY())) < al.getGridSize()) {
@@ -644,19 +651,21 @@ class BezierTool extends Tool {
             }
         }
     }
-    onMousePressed(maker) {
+    onMousePressed(maker, mouseX, mouseY, mouseMoving) {
+        super.onMousePressed(maker, mouseX, mouseY, mouseMoving);
         if(this.hovering) {
             this.moving = this.hovering;
         }
     }
-    onDrag(maker) {
+    onDrag(maker, mouseX, mouseY) {
         if(this.moving == 1) {
-            this.bezierTile.setStartOffset(maker.getXOffset(), maker.getYOffset());
+            this.bezierTile.setStartOffset(this.layer.toNearest(this.getXOffset(mouseX)), this.layer.toNearest(this.getYOffset(mouseY)));
         } else if(this.moving == 2) {
-            this.bezierTile.setEndOffset(maker.getXOffset(), maker.getYOffset());
+            this.bezierTile.setEndOffset(this.layer.toNearest(this.getXOffset(mouseX)), this.layer.toNearest(this.getYOffset(mouseY)));
         }
     }
-    onMouseReleased(maker) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
         if(this.moving) {
             let q = this.bezierTile.getBezier(this.moving);
             let t = this.bezierTile.getOffset(this.moving);
@@ -668,7 +677,7 @@ class BezierTool extends Tool {
     }
 }
 
-class CropTool extends Tool {
+class CropTool extends DraggableTool {
     constructor() {
         super("CROP");
     }
@@ -676,12 +685,18 @@ class CropTool extends Tool {
         noFill();
         stroke(0, 0, 0);
         strokeWeight(3);
-        drawingContext.setLineDash([10, 10]);
-        let al = maker.getActiveLayer();
-        rect(al.toSCFX(this.getStartX()), al.toSCFY(this.getStartY()), al.toSCCX(this.getEndX()), al.toSCCY(this.getEndY()));
-        drawingContext.setLineDash([]);
+        let al = this.layer;
+        let sX = al.toSCFX(this.getStartX());
+        let sY = al.toSCFY(this.getStartY());
+        let eX = al.toSCCX(this.getEndX());
+        let eY = al.toSCCY(this.getEndY());
+        line(sX - 10, sY, eX, sY);
+        line(eX, sY, eX, eY + 10);
+        line(sX, eY, eX + 10, eY);
+        line(sX, sY - 10, sX, eY);
     }
-    onMouseReleased(maker) {
+    onMouseReleased(maker, mouseX, mouseY, mouseMoving) {
+        super.onMouseReleased(maker, mouseX, mouseY, mouseMoving);
         maker.addAction(new ResizeCanvasAction(maker.width, this.getEndX() - this.getStartX() + 1, maker.height, this.getEndY() - this.getStartY() + 1, ));
         maker.moveAll(-this.getStartX(), -this.getStartY());
     }

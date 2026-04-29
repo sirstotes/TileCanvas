@@ -135,6 +135,12 @@ class Layer extends IDObject {
     toStart(x) {//Moves the value to the start of the nearest grid line
         return floor(x / (2**this.gridScale)) * (2**this.gridScale)
     }
+    toNearest(x) {
+        return floor(x / (2**this.gridScale)) * (2**this.gridScale);
+    }
+    toMiddle(x) {//Moves the value to the center of the grid lines
+        return floor(x / (2**this.gridScale)) * (2**this.gridScale) + (2**this.gridScale) * 0.5
+    }
     toEnd(x) {//Moves the value to the end of the nearest grid line
         return floor(x / (2**this.gridScale)) * (2**this.gridScale) + (2**this.gridScale) - 1
     }

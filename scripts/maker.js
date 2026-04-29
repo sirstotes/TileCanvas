@@ -27,11 +27,6 @@ class Maker {//TODO split into maker and canvas
         this.currentTool = Maker.TOOLS.RECT;
         this.currentTool.onEnable(this);
         this.currentColor = '#000000';
-        this.currentStartMouseX = 0;
-        this.currentStartMouseY = 0;
-        this.currentEndMouseX = 0;
-        this.currentEndMouseY = 0;
-        this.currentRotation = 0;
         this.currentLayer = 0;
         this.movingSelection = false;
         this.selection = null;
@@ -94,25 +89,25 @@ class Maker {//TODO split into maker and canvas
         if(this.dragging) {
             if(!mousePressed) {
                 if(insideCanvas(mouseX, mouseY) && focused) {
-                    this.currentTool.onDragEnd(this);
+                    this.currentTool.onDragEnd(this, mouseX, mouseY);
                 }
                 this.dragging = false;
             } else {
-                this.currentTool.onDrag(this);
+                this.currentTool.onDrag(this, mouseX, mouseY);
             }
         } else {
             if(insideCanvas(mouseX, mouseY) && focused) {
                 this.currentStartMouseX = round(mouseX);
                 this.currentStartMouseY = round(mouseY);
                 if(mousePressed && mouseButton == "left") {
-                    this.currentTool.onDragStart(this);
+                    this.currentTool.onDragStart(this, mouseX, mouseY);
                     this.dragging = true;
                 }
             }
         }
         if(insideCanvas(mouseX, mouseY) && focused) {
             if(mousePressed && !this.pMousePressed) {
-                this.currentTool.onMousePressed(this, mouseX, mouseY);
+                this.currentTool.onMousePressed(this, mouseX, mouseY, mouseX != this.pMouseX || mouseY != this.pMouseY);
             }
             if(!mousePressed && this.pMousePressed) {
                 this.currentTool.onMouseReleased(this, mouseX, mouseY);
@@ -127,36 +122,6 @@ class Maker {//TODO split into maker and canvas
         this.pMouseX = mouseX;
         this.pMouseY = mouseY;
         this.pMousePressed = mousePressed;
-    }
-    getStartX() {
-        return this.getActiveLayer().toLCF(min(this.currentStartMouseX, this.currentEndMouseX));
-    }
-    getStartY() {
-        return this.getActiveLayer().toLCFY(min(this.currentStartMouseY, this.currentEndMouseY));
-    }
-    getEndX() {
-        return this.getActiveLayer().toLCF(max(this.currentStartMouseX, this.currentEndMouseX));
-    }
-    getEndY() {
-        return this.getActiveLayer().toLCFY(max(this.currentStartMouseY, this.currentEndMouseY));
-    }
-    getCurrentX() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseX);
-    }
-    getCurrentY() {
-        return this.getActiveLayer().toLCFY(this.currentEndMouseY);
-    }
-    getXOffset() {
-        return this.getActiveLayer().toLCF(this.currentEndMouseX - this.currentStartMouseX);
-    }
-    getYOffset() {
-        return this.getActiveLayer().toLCFY(this.currentEndMouseY - this.currentStartMouseY);
-    }
-    startEndEqual() {
-        return this.getStartX() == this.getEndX() && this.getStartY() == this.getEndY();
-    }
-    getRotation() {
-        return this.currentRotation;
     }
     getSelection() {
         return this.selection;
